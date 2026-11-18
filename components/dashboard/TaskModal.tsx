@@ -9,6 +9,7 @@ import { z } from "zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import { FileText, Loader2, Trash2, UploadCloud, X } from "lucide-react";
+import { usePermissions } from "@/components/role-store";
 import {
   Attachment, AttachmentKind, Brand, ContentTask, PLATFORMS, PLATFORM_META, STATUSES, STATUS_META,
 } from "@/lib/types";
@@ -44,6 +45,8 @@ export function TaskModal({ open, task, defaultDate, brands, onClose }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
   const qc = useQueryClient();
   const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const { can } = usePermissions();
+  const readOnly = !can("task:edit"); // Viewer = อ่านอย่างเดียว (ตัวบังคับจริงคือ API)
 
   const { register, control, handleSubmit, reset, watch, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -112,13 +115,13 @@ export function TaskModal({ open, task, defaultDate, brands, onClose }: Props) {
     >
       <form onSubmit={handleSubmit((v) => save.mutate(v))} className="flex max-h-[90vh] flex-col">
         <header className="flex items-center justify-between border-b px-5 py-3">
-          <h2 className="text-lg font-semibold">{task ? "แก้ไขคอนเทนต์" : "สร้างคอนเทนต์ใหม่"}</h2>
+          <h2 className="text-lg font-semibold">{readOnly ? "บรีฟคอนเทนต์" : task ? "แก้ไขคอนเทนต์" : "สร้างคอนเทนต์ใหม่"}</h2>
           <button type="button" onClick={onClose} className="rounded p-1 hover:bg-slate-100" aria-label="ปิด">
             <X size={18} />
           </button>
         </header>
 
-        <div className="grid flex-1 gap-6 overflow-y-auto p-5 md:grid-cols-2">
+        <fieldset disabled={readOnly} className="grid min-w-0 flex-1 gap-6 overflow-y-auto border-0 p-5 md:grid-cols-2">
           {/* ---------- ซ้าย: ข้อมูลบรีฟ ---------- */}
           <div className="space-y-4">
             <Field label="หัวข้อคอนเทนต์" error={errors.title?.message}>
@@ -180,10 +183,10 @@ export function TaskModal({ open, task, defaultDate, brands, onClose }: Props) {
           {/* ---------- ขวา: ไฟล์แนบ ---------- */}
           <div className="space-y-3">
             <h3 className="text-sm font-medium">ไฟล์แนบ (Artwork / วิดีโอ / Reference)</h3>
-            <FileUploader onUploaded={(a) => setAttachments((prev) => [...prev, a])} />
+            {!readOnly && <FileUploader brandId={watch("brandId")} taskId={task?.id} onUploaded={(a) => setAttachments((prev) => [...prev, a])} />}
             <ul className="grid grid-cols-2 gap-3">
               {attachments.map((a) => (
-                <AttachmentPreview key={a.id} a={a} onRemove={() => setAttachments((p) => p.filter((x) => x.id !== a.id))} />
+                <AttachmentPreview key={a.id} a={a} onRemove={readOnly ? undefined : () => setAttachments((p) => p.filter((x) => x.id !== a.id))} />
               ))}
             </ul>
             {status === "REVISION" && (
@@ -192,20 +195,22 @@ export function TaskModal({ open, task, defaultDate, brands, onClose }: Props) {
               </p>
             )}
           </div>
-        </div>
+        </fieldset>
 
         <footer className="flex items-center justify-between border-t px-5 py-3">
-          {task ? (
+          {task && !readOnly ? (
             <button type="button" onClick={() => remove.mutate()} className="flex items-center gap-1 text-sm text-rose-600 hover:underline">
               <Trash2 size={15} /> ลบ
             </button>
           ) : <span />}
           <div className="flex items-center gap-2">
             {save.isError && <span className="text-sm text-rose-600">บันทึกไม่สำเร็จ ลองใหม่อีกครั้ง</span>}
-            <button type="button" onClick={onClose} className="rounded-lg border px-4 py-2 text-sm hover:bg-slate-50">ยกเลิก</button>
+            <button type="button" onClick={onClose} className="rounded-lg border px-4 py-2 text-sm hover:bg-slate-50">{readOnly ? "ปิด" : "ยกเลิก"}</button>
+            {!readOnly && (
             <button type="submit" disabled={save.isPending} className="flex items-center gap-1 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60">
               {save.isPending && <Loader2 size={14} className="animate-spin" />} บันทึก
             </button>
+            )}
           </div>
         </footer>
       </form>
@@ -237,7 +242,7 @@ function CharCount({ control }: { control: any }) {
 }
 
 /* ------------------------------ upload (presigned URL) ------------------------------ */
-function FileUploader({ onUploaded }: { onUploaded: (a: Attachment) => void }) {
+function FileUploader({ brandId, taskId, onUploaded }: { brandId: string; taskId?: string; onUploaded: (a: Attachment) => void }) {
   const [busy, setBusy] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -253,9 +258,12 @@ function FileUploader({ onUploaded }: { onUploaded: (a: Attachment) => void }) {
       const sign = await fetch("/api/uploads/sign", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fileName: file.name, mimeType: file.type, size: file.size }),
+        body: JSON.stringify({ fileName: file.name, mimeType: file.type, size: file.size, purpose: "REFERENCE", taskId, brandId }),
       });
-      if (!sign.ok) throw new Error("sign failed");
+      if (!sign.ok) {
+        const e = await sign.json().catch(() => ({}));
+        throw new Error(e.reason ?? "sign failed");
+      }
       const { uploadUrl, publicUrl, key } = await sign.json();
 
       // 2) อัปโหลดตรงไป storage (ไม่ผ่านเซิร์ฟเวอร์เรา)
@@ -264,6 +272,7 @@ function FileUploader({ onUploaded }: { onUploaded: (a: Attachment) => void }) {
 
       onUploaded({
         id: crypto.randomUUID(),
+        purpose: "REFERENCE",
         kind: kindOf(file.type),
         fileName: file.name,
         mimeType: file.type,
@@ -271,8 +280,8 @@ function FileUploader({ onUploaded }: { onUploaded: (a: Attachment) => void }) {
         key,
         url: publicUrl,
       });
-    } catch {
-      setError(`อัปโหลด ${file.name} ไม่สำเร็จ`);
+    } catch (e) {
+      setError(`อัปโหลด ${file.name} ไม่สำเร็จ${e instanceof Error && e.message !== "sign failed" && e.message !== "upload failed" ? ` (${e.message})` : ""}`);
     } finally {
       setBusy((b) => b.filter((n) => n !== file.name));
     }
@@ -304,19 +313,25 @@ function FileUploader({ onUploaded }: { onUploaded: (a: Attachment) => void }) {
   );
 }
 
-function AttachmentPreview({ a, onRemove }: { a: Attachment; onRemove: () => void }) {
+function AttachmentPreview({ a, onRemove }: { a: Attachment; onRemove?: () => void }) {
   return (
     <li className="group relative overflow-hidden rounded-lg border bg-slate-50">
       {a.kind === "IMAGE" && (
         <a href={a.url} target="_blank" rel="noreferrer"><img src={a.url} alt={a.fileName} className="h-32 w-full object-cover" /></a>
       )}
       {a.kind === "VIDEO" && <video src={a.url} controls preload="metadata" className="h-32 w-full bg-black object-contain" />}
+      {a.kind === "LINK" && (
+        <a href={a.url} target="_blank" rel="noopener noreferrer" className="flex h-32 flex-col items-center justify-center gap-1 text-slate-600 hover:bg-slate-100">
+          <FileText size={28} /> <span className="text-xs">เปิดลิงก์</span>
+        </a>
+      )}
       {a.kind === "DOCUMENT" && (
         <a href={a.url} target="_blank" rel="noreferrer" className="flex h-32 flex-col items-center justify-center gap-1 text-slate-600 hover:bg-slate-100">
           <FileText size={28} /> <span className="text-xs">เปิดไฟล์</span>
         </a>
       )}
       <p className="truncate px-2 py-1 text-xs text-slate-600">{a.fileName}</p>
+      {onRemove && (
       <button
         type="button"
         onClick={onRemove}
@@ -325,6 +340,7 @@ function AttachmentPreview({ a, onRemove }: { a: Attachment; onRemove: () => voi
       >
         <X size={14} />
       </button>
+      )}
     </li>
   );
 }

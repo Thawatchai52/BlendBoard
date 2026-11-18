@@ -16,6 +16,7 @@ import { CalendarDays, ChevronLeft, ChevronRight, Columns3, Plus } from "lucide-
 import {
   Brand, ContentTask, Filters, PLATFORMS, PLATFORM_META, Platform, STATUSES, STATUS_META, Status,
 } from "@/lib/types";
+import { usePermissions } from "@/components/role-store";
 import { TaskModal } from "./TaskModal";
 
 type View = "calendar" | "kanban";
@@ -63,6 +64,9 @@ export function ContentDashboard({ brands }: { brands: Brand[] }) {
   const [filters, setFilters] = useState<Filters>({ brandIds: [], statuses: [], platforms: [] });
   const [modal, setModal] = useState<{ open: boolean; task?: ContentTask; defaultDate?: Date }>({ open: false });
   const [dragging, setDragging] = useState<ContentTask | null>(null);
+  const { can } = usePermissions();
+  const canCreate = can("task:create");
+  const canMove = can("task:reschedule");
 
   const { data: all = [], isLoading } = useTasks(month, filters);
   const patch = usePatchTask();
@@ -81,10 +85,11 @@ export function ContentDashboard({ brands }: { brands: Brand[] }) {
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
-  const onDragStart = (e: DragStartEvent) => setDragging(tasks.find((t) => t.id === e.active.id) ?? null);
+  const onDragStart = (e: DragStartEvent) => canMove && setDragging(tasks.find((t) => t.id === e.active.id) ?? null);
 
   const onDragEnd = (e: DragEndEvent) => {
     setDragging(null);
+    if (!canMove) return;
     const task = tasks.find((t) => t.id === e.active.id);
     const overId = e.over?.id?.toString();
     if (!task || !overId) return;
@@ -126,12 +131,14 @@ export function ContentDashboard({ brands }: { brands: Brand[] }) {
             <ViewBtn active={view === "calendar"} onClick={() => setView("calendar")} icon={<CalendarDays size={15} />} label="ปฏิทิน" />
             <ViewBtn active={view === "kanban"} onClick={() => setView("kanban")} icon={<Columns3 size={15} />} label="Kanban" />
           </div>
-          <button
-            className="flex items-center gap-1 rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-700"
-            onClick={() => setModal({ open: true })}
-          >
-            <Plus size={16} /> สร้างคอนเทนต์
-          </button>
+          {canCreate && (
+            <button
+              className="flex items-center gap-1 rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-700"
+              onClick={() => setModal({ open: true })}
+            >
+              <Plus size={16} /> สร้างคอนเทนต์
+            </button>
+          )}
         </div>
       </header>
 
@@ -288,6 +295,7 @@ function DayCell({
 }: { day: Date; muted: boolean; tasks: ContentTask[]; onOpen: (t: ContentTask) => void; onCreate: (d: Date) => void }) {
   const { setNodeRef, isOver } = useDroppable({ id: `day:${format(day, "yyyy-MM-dd")}` });
   const today = isSameDay(day, new Date());
+  const { can } = usePermissions();
   return (
     <div
       ref={setNodeRef}
@@ -297,13 +305,15 @@ function DayCell({
         <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs ${today ? "bg-slate-900 font-semibold text-white" : muted ? "text-slate-400" : "text-slate-600"}`}>
           {format(day, "d")}
         </span>
-        <button
-          className="rounded p-0.5 text-slate-400 opacity-0 hover:bg-slate-100 group-hover:opacity-100"
-          onClick={() => onCreate(day)}
-          aria-label="เพิ่มคอนเทนต์ในวันนี้"
-        >
-          <Plus size={14} />
-        </button>
+        {can("task:create") && (
+          <button
+            className="rounded p-0.5 text-slate-400 opacity-0 hover:bg-slate-100 group-hover:opacity-100"
+            onClick={() => onCreate(day)}
+            aria-label="เพิ่มคอนเทนต์ในวันนี้"
+          >
+            <Plus size={14} />
+          </button>
+        )}
       </div>
       <div className="space-y-1">
         {tasks.map((t) => <TaskChip key={t.id} task={t} onOpen={() => onOpen(t)} />)}
@@ -313,7 +323,8 @@ function DayCell({
 }
 
 function TaskChip({ task, onOpen }: { task: ContentTask; onOpen: () => void }) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: task.id });
+  const { can } = usePermissions();
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: task.id, disabled: !can("task:reschedule") });
   return (
     <button
       ref={setNodeRef}
@@ -357,7 +368,8 @@ function KanbanColumn({ status, tasks, onOpen }: { status: Status; tasks: Conten
 }
 
 function DraggableCard({ task, onOpen }: { task: ContentTask; onOpen: () => void }) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: task.id });
+  const { can } = usePermissions();
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: task.id, disabled: !can("task:reschedule") });
   return (
     <div ref={setNodeRef} {...listeners} {...attributes} onClick={onOpen} className={isDragging ? "opacity-40" : ""}>
       <TaskCard task={task} />

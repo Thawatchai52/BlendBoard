@@ -77,3 +77,10 @@
   .bs-sun-rays { animation: bs-spin 14s linear infinite; }
 }
 @keyframes bs-spin { to { transform: rotate(360deg); } }
+
+/* ช่องกรอกของฟอร์มใน TaskModal */
+@layer components {
+  .input {
+    @apply w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300;
+  }
+}

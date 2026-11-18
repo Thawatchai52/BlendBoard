@@ -1,4 +1,4 @@
-// หน้าแรกหลังเข้าสู่ระบบ — ตอนนี้เป็นหน้าทางเข้า (ปฏิทิน/Kanban ต้องมี API /api/tasks ก่อน ดู README)
+// หน้าแรกหลังเข้าสู่ระบบ — ทางเข้าไปปฏิทิน/Kanban และ (Admin) สถิติ TikTok
 import Link from 'next/link';
 import { getRole } from '@/lib/guard';
 import { LogoutButton } from '@/components/role-store';
@@ -12,17 +12,19 @@ export default async function DashboardHome() {
         <LogoutButton className="rounded-brand border border-line px-3 py-1.5 text-sm hover:bg-surface-2" />
       </header>
 
+      <Link href="/dashboard/calendar" className="rounded-brand border border-line bg-surface p-5 hover:bg-surface-2">
+        <p className="font-head text-lg font-semibold">ปฏิทินคอนเทนต์ / Kanban</p>
+        <p className="mt-1 text-sm text-muted">
+          {role === 'ADMIN' ? 'สร้าง แก้ไข ลากเลื่อนวัน' : 'ดูตารางงานและบรีฟ (อ่านอย่างเดียว)'}
+        </p>
+      </Link>
+
       {role === 'ADMIN' && (
         <Link href="/dashboard/tiktok" className="rounded-brand border border-line bg-surface p-5 hover:bg-surface-2">
           <p className="font-head text-lg font-semibold">สถิติคลิป TikTok</p>
           <p className="mt-1 text-sm text-muted">ยอดวิว ER และป้าย 🔥 แมสแตก!</p>
         </Link>
       )}
-
-      <p className="rounded-brand border border-dashed border-line p-5 text-sm text-muted">
-        ปฏิทินและ Kanban ยังไม่เชื่อมฐานข้อมูลในโปรเจกต์นี้ (ต้องสร้าง API <code>/api/tasks</code> และ <code>/api/uploads/sign</code> ก่อน)
-        ระหว่างนี้ใช้เว็บต้นแบบที่ <code>prototype/index.html</code> ได้เลย
-      </p>
     </main>
   );
 }

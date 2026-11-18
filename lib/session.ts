@@ -54,18 +54,8 @@ const VIEWER_ACTIONS = new Set<Action>(['task:view', 'file:download', 'file:uplo
 export const can = (role: Role | null | undefined, action: Action) =>
   role === 'ADMIN' || (role === 'VIEWER' && VIEWER_ACTIONS.has(action));
 
-/** Viewer เปลี่ยนสถานะได้เฉพาะเส้นทางเหล่านี้ ส่วน Admin เปลี่ยนได้ทุกเส้นทาง */
-const VIEWER_TRANSITIONS: Partial<Record<Status, Status[]>> = {
-  DRAFT: ['IN_REVIEW'],
-  REVISION: ['IN_REVIEW'],
-  IN_REVIEW: ['DRAFT'],
-};
-
-export function canTransition(role: Role | null | undefined, from: Status, to: Status) {
-  if (from === to || !role) return false;
-  if (role === 'ADMIN') return true;
-  return (VIEWER_TRANSITIONS[from] ?? []).includes(to);
-}
+// กติกาเปลี่ยนสถานะอยู่ใน lib/task-rules.ts (เทสต์ได้) re-export ไว้ให้ import จากที่เดิมได้
+export { canTransition } from '@/lib/task-rules';
 
 /* ------------------------------ ใช้ใน API Route ------------------------------
    import { cookies } from 'next/headers';

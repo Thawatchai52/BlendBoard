@@ -1,4 +1,6 @@
 // prisma/schema.prisma
+// ระบบมี 2 สิทธิ์ (VIEWER / ADMIN) จาก cookie ที่เซิร์ฟเวอร์เซ็น ไม่มีบัญชีรายคน
+// จึงไม่มีตาราง User — ประวัติ/คอมเมนต์เก็บเป็น "ใครทำในบทบาทไหน" (actorRole) แทน
 generator client {
   provider = "prisma-client-js"
 }
@@ -6,13 +8,6 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-}
-
-enum Role {
-  ADMIN
-  EDITOR
-  REVIEWER
-  VIEWER
 }
 
 enum ContentStatus {
@@ -36,21 +31,17 @@ enum AttachmentKind {
   IMAGE
   VIDEO
   DOCUMENT
+  LINK       // ลิงก์ภายนอก (เช่น คลิป TikTok) เก็บใน url ไม่มีไฟล์ใน storage
 }
 
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String
-  avatarUrl String?
-  role      Role     @default(EDITOR)
-  lineUserId String? // สำหรับส่งแจ้งเตือนทาง LINE
-  createdAt DateTime @default(now())
+enum AttachmentPurpose {
+  REFERENCE    // ไฟล์บรีฟ (Admin แนบ)
+  DELIVERABLE  // ไฟล์/ลิงก์ส่งงาน (Viewer หรือ Admin แนบ)
+}
 
-  assignedTasks ContentTask[]   @relation("Assignee")
-  createdTasks  ContentTask[]   @relation("Creator")
-  comments      Comment[]
-  statusChanges StatusHistory[]
+enum ActorRole {
+  VIEWER
+  ADMIN
 }
 
 model Brand {
@@ -73,17 +64,15 @@ model ContentTask {
   position    Int           @default(0) // ลำดับในคอลัมน์ Kanban
   notifiedAt  DateTime?     // กันเตือนซ้ำ
 
-  brandId    String
-  brand      Brand  @relation(fields: [brandId], references: [id])
-  assigneeId String?
-  assignee   User?  @relation("Assignee", fields: [assigneeId], references: [id])
-  creatorId  String
-  creator    User   @relation("Creator", fields: [creatorId], references: [id])
+  revisionNote  String?  @db.Text // สิ่งที่ต้องแก้ล่าสุด (จากการตีกลับ)
+  revisionRound Int      @default(0)
+  submittedAt   DateTime?
+
+  brandId String
+  brand   Brand  @relation(fields: [brandId], references: [id])
 
   attachments Attachment[]
-  comments    Comment[]
   history     StatusHistory[]
-  tags        TaskTag[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -94,57 +83,31 @@ model ContentTask {
 }
 
 model Attachment {
-  id       String         @id @default(cuid())
+  id       String            @id @default(cuid())
   taskId   String
-  task     ContentTask    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  task     ContentTask       @relation(fields: [taskId], references: [id], onDelete: Cascade)
   kind     AttachmentKind
+  purpose  AttachmentPurpose @default(REFERENCE)
   fileName String
   mimeType String
-  size     Int            // bytes
-  key      String         // path ใน storage
-  url      String         // public/signed URL
-  uploadedAt DateTime     @default(now())
-
-  @@index([taskId])
-}
-
-model Tag {
-  id    String @id @default(cuid())
-  name  String @unique // เช่น "โปรโมชัน", "Reel", "ลูกค้าส่งมา"
-  color String @default("#64748B")
-  tasks TaskTag[]
-}
-
-model TaskTag {
-  taskId String
-  tagId  String
-  task   ContentTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  tag    Tag         @relation(fields: [tagId], references: [id], onDelete: Cascade)
-
-  @@id([taskId, tagId])
-}
-
-model Comment {
-  id        String      @id @default(cuid())
-  taskId    String
-  task      ContentTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  authorId  String
-  author    User        @relation(fields: [authorId], references: [id])
-  body      String      @db.Text
-  createdAt DateTime    @default(now())
+  size     Int               // bytes (LINK = 0)
+  key      String?           // path ใน storage (LINK = null) ต้องขึ้นต้นด้วย brandId/
+  url      String?           // เฉพาะ LINK  ไฟล์ใน storage ออก URL ชั่วคราวตอนอ่าน
+  uploadedByRole ActorRole   @default(ADMIN)
+  uploadedAt DateTime        @default(now())
 
   @@index([taskId])
 }
 
 model StatusHistory {
-  id         String        @id @default(cuid())
+  id         String         @id @default(cuid())
   taskId     String
-  task       ContentTask   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  task       ContentTask    @relation(fields: [taskId], references: [id], onDelete: Cascade)
   fromStatus ContentStatus?
   toStatus   ContentStatus
-  changedById String
-  changedBy  User          @relation(fields: [changedById], references: [id])
-  changedAt  DateTime      @default(now())
+  actorRole  ActorRole
+  comment    String?        @db.Text // เหตุผลที่ตีกลับ / หมายเหตุ
+  changedAt  DateTime       @default(now())
 
   @@index([taskId])
 }

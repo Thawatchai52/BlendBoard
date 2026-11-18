@@ -29,11 +29,13 @@ export interface Brand {
   color: string;
 }
 
-export type AttachmentKind = "IMAGE" | "VIDEO" | "DOCUMENT";
+export type AttachmentKind = "IMAGE" | "VIDEO" | "DOCUMENT" | "LINK";
+export type AttachmentPurpose = "REFERENCE" | "DELIVERABLE";
 
 export interface Attachment {
   id: string;
   kind: AttachmentKind;
+  purpose?: AttachmentPurpose; // REFERENCE = ไฟล์บรีฟ (Admin) | DELIVERABLE = ไฟล์/ลิงก์ส่งงาน
   fileName: string;
   mimeType: string;
   size: number;
@@ -51,7 +53,8 @@ export interface ContentTask {
   briefDueAt?: string | null;
   brandId: string;
   brand: Brand;
-  assigneeId?: string | null;
+  revisionNote?: string | null; // สิ่งที่ต้องแก้ล่าสุด (จากการตีกลับ)
+  revisionRound?: number;
   attachments: Attachment[];
 }
 
