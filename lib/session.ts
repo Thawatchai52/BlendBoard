@@ -5,6 +5,9 @@ export type Role = 'VIEWER' | 'ADMIN';
 export const COOKIE = 'cc_role';
 export const SESSION_HOURS = 12;
 
+if (process.env.NODE_ENV === 'production' && !process.env.SESSION_SECRET) {
+  throw new Error('ต้องตั้งค่า SESSION_SECRET ใน environment ก่อนใช้งานจริง');
+}
 const SECRET = process.env.SESSION_SECRET ?? 'dev-only-change-me'; // ตั้งค่าจริงใน .env: SESSION_SECRET=สุ่มยาว ๆ
 const enc = new TextEncoder();
 

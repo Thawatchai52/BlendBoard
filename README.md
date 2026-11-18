@@ -10,18 +10,32 @@
 |---|---|
 | `prototype/index.html` | **เว็บต้นแบบไฟล์เดียว** เปิดในเบราว์เซอร์ได้เลย ข้อมูลเก็บใน localStorage ไม่มีเซิร์ฟเวอร์ ใช้ลองหน้าตา/การใช้งาน |
 | `app/ components/ lib/ hooks/ middleware.ts` | **โค้ด Next.js 15 (App Router)** ของระบบจริง: หน้า Landing 2 ประตู, สิทธิ์ Viewer/Admin, Dashboard, TikTok Analytics |
-| `prisma/` | `schema.prisma` (งาน/แบรนด์) + `tiktok.prisma` (ต่อท้าย schema.prisma) |
+| `prisma/schema.prisma` | ตารางงาน/แบรนด์ + TikTok (รวมไฟล์เดียวแล้ว) |
 | `docs/` | สถาปัตยกรรม (`ARCHITECTURE.md`) และการออกแบบสิทธิ์ (`RBAC.md`) |
 | `legacy-rbac/` | RBAC รุ่นเก่าแบบมีบัญชีรายคน เก็บไว้อ้างอิง **ไม่ได้ใช้แล้ว** ถูกแทนที่ด้วย 2 ประตู + cookie |
 | `tests/` | เทสต์สูตร ER / ตัวตรวจลิงก์ TikTok |
 
+## รันโปรเจกต์
+
+```bash
+npm install
+cp .env.example .env        # แล้วกรอกค่า (อย่างน้อย DATABASE_URL, SESSION_SECRET, ADMIN_PASSWORD)
+npx prisma db push          # สร้างตารางในฐานข้อมูล Postgres
+npm run dev                 # http://localhost:3000
+npm test                    # เทสต์สูตร ER / ตัวตรวจลิงก์
+```
+
+ต้องใช้ Node 20.9+ · ตอน build จริง (`NODE_ENV=production`) ต้องตั้ง `SESSION_SECRET` ไม่เช่นนั้นระบบจะไม่ยอมเริ่ม
+
 ## สถานะ (อ่านก่อนใช้)
 
 - ✅ เว็บต้นแบบ (`prototype/`) ใช้งานได้ครบและผ่านการทดสอบอัตโนมัติ
-- ⚠️ โค้ด Next.js เป็น **ชุดไฟล์ที่ยังไม่เคยรันเป็นโปรเจกต์** ยังไม่มี `package.json` / `tsconfig.json` / `lib/prisma.ts`
-  ต้องสร้างโปรเจกต์ Next.js 15 แล้วนำไฟล์เหล่านี้ใส่ ติดตั้ง `zustand @tanstack/react-query @dnd-kit/core zod @prisma/client`
-  และเพิ่ม alias `@/*` ใน tsconfig
-- ✅ เทสต์ตรรกะผ่าน (`node --experimental-strip-types --test tests/metrics.test.ts tests/tiktok-url.test.ts`)
+- ✅ เทสต์ตรรกะผ่าน 12 ข้อ (ER, ป้ายแมส, ตรวจลิงก์ TikTok)
+- ⚠️ **โปรเจกต์ Next.js ยังไม่เคย `npm install` / `next build` จริง** (สภาพแวดล้อมที่เขียนโค้ดต่อเน็ตติดตั้งแพ็กเกจไม่ได้)
+  ตรวจได้แค่ว่า import ทุกจุดชี้ไฟล์ที่มีจริง ถ้า `npm run typecheck` / `build` ฟ้อง error ให้แจ้งมาแก้ต่อ
+- ✅ ใช้ได้เมื่อรันแล้ว: หน้า Landing 2 ประตู, สิทธิ์ Viewer/Admin (cookie เซ็นลายเซ็น), `/dashboard`, TikTok Analytics (`/dashboard/tiktok`)
+- ❌ **ยังไม่ได้ทำ:** API ของปฏิทิน/Kanban (`/api/tasks`, `/api/tasks/[id]`, `/api/uploads/sign`)
+  คอมโพเนนต์ `components/dashboard/*` เรียก API เหล่านี้ จึงยังไม่ได้ต่อเข้าหน้า `/dashboard` ระหว่างนี้ใช้ `prototype/index.html`
 - 🔐 **รหัสผ่านฝั่ง Admin:** ใน `prototype/index.html` ฝังรหัสไว้ในโค้ด (ใครเปิดซอร์สก็เห็น) เหมาะกับต้นแบบเท่านั้น
   ของจริงตรวจที่เซิร์ฟเวอร์ผ่าน `app/api/auth/enter/route.ts` (ตั้ง `ADMIN_PASSWORD` ใน env และ **ควรเปลี่ยนรหัสเริ่มต้น**)
   ถ้า repo นี้เป็น Public ใครก็เห็นรหัสในไฟล์ต้นแบบ ควรเปลี่ยนเป็น Private หรือเปลี่ยนรหัสก่อนใช้งานจริง

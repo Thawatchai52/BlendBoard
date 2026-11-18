@@ -148,3 +148,55 @@ model StatusHistory {
 
   @@index([taskId])
 }
+
+// ------------------------------ TikTok Analytics ------------------------------
+enum FetchStatus {
+  PENDING   // รับลิงก์แล้ว รอดึง
+  FETCHING  // กำลังดึง (ล็อกกันดึงซ้ำ)
+  OK        // ดึงสำเร็จ
+  FAILED    // ดึงไม่สำเร็จ (ดู error / attempts)
+}
+
+model TikTokPost {
+  id            String      @id @default(cuid())
+  url           String      @unique            // normalize แล้ว (ตัด query/hash)
+  videoId       String?     @unique            // ได้จาก URL หรือจากผลของผู้ให้บริการ (ลิงก์สั้น)
+  status        FetchStatus @default(PENDING)
+  error         String?
+  attempts      Int         @default(0)        // ล้มเหลวติดกันกี่ครั้ง (cron เลิกลองเมื่อครบ 5)
+
+  // ยอดล่าสุด  null = ยังไม่เคยดึงได้ / ผู้ให้บริการไม่มีฟิลด์นี้
+  views         Int?
+  likes         Int?
+  comments      Int?
+  shares        Int?
+  saves         Int?
+
+  authorHandle  String?
+  caption       String?
+  postedAt      DateTime?
+
+  submittedAt   DateTime    @default(now())
+  lastFetchedAt DateTime?
+  updatedAt     DateTime    @updatedAt
+
+  snapshots     TikTokSnapshot[]
+
+  @@index([status, lastFetchedAt])
+  @@index([submittedAt])
+}
+
+// ประวัติยอดทุกครั้งที่ดึง ใช้ทำกราฟโตตามเวลาได้ภายหลัง ไม่ต้องเก็บ ER (คำนวณตอนอ่าน)
+model TikTokSnapshot {
+  id       String     @id @default(cuid())
+  postId   String
+  post     TikTokPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  takenAt  DateTime   @default(now())
+  views    Int?
+  likes    Int?
+  comments Int?
+  shares   Int?
+  saves    Int?
+
+  @@index([postId, takenAt])
+}

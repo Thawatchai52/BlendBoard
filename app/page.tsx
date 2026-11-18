@@ -34,7 +34,7 @@ function DoorCard(props: {
     <article
       className={`relative flex min-w-0 flex-col items-center gap-3.5 px-6 pb-[34px] pt-[112px] text-center transition duration-200 hover:-translate-y-1 hover:shadow-xl motion-reduce:transition-none motion-reduce:hover:translate-y-0 md:px-9 md:pb-10 md:pt-[116px] ${ARCH} ${
         open
-          ? 'border-2 border-brand bg-gradient-to-b from-brand/20 to-surface to-60% text-fg'
+          ? 'border-2 border-brand bg-gradient-to-b from-[color-mix(in_srgb,var(--brand)_20%,transparent)] to-surface to-60% text-fg'
           : 'border-2 border-transparent bg-gradient-to-br from-hero-a to-hero-b text-hero-fg'
       }`}
     >
