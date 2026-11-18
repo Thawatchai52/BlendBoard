@@ -1,0 +1,150 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  EDITOR
+  REVIEWER
+  VIEWER
+}
+
+enum ContentStatus {
+  DRAFT        // Draft
+  IN_REVIEW    // รอตรวจ
+  REVISION     // ให้แก้
+  APPROVED     // Approved
+  POSTED       // Posted
+}
+
+enum Platform {
+  FACEBOOK
+  INSTAGRAM
+  TIKTOK
+  YOUTUBE
+  LINE_OA
+  X
+}
+
+enum AttachmentKind {
+  IMAGE
+  VIDEO
+  DOCUMENT
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  avatarUrl String?
+  role      Role     @default(EDITOR)
+  lineUserId String? // สำหรับส่งแจ้งเตือนทาง LINE
+  createdAt DateTime @default(now())
+
+  assignedTasks ContentTask[]   @relation("Assignee")
+  createdTasks  ContentTask[]   @relation("Creator")
+  comments      Comment[]
+  statusChanges StatusHistory[]
+}
+
+model Brand {
+  id    String @id @default(cuid())
+  code  String @unique // "KS", "BL"
+  name  String          // "Kudsan", "Bellinee's"
+  color String          // hex เช่น "#F97316"
+
+  tasks ContentTask[]
+}
+
+model ContentTask {
+  id          String        @id @default(cuid())
+  title       String
+  caption     String?       @db.Text // Caption / Copywriting
+  status      ContentStatus @default(DRAFT)
+  platforms   Platform[]    // ลงได้หลายแพลตฟอร์ม
+  publishDate DateTime      // วัน-เวลาที่จะโพสต์ (ใช้แสดงในปฏิทิน)
+  briefDueAt  DateTime?     // กำหนดส่งบรีฟ/งานดีไซน์ (ใช้เตือน)
+  position    Int           @default(0) // ลำดับในคอลัมน์ Kanban
+  notifiedAt  DateTime?     // กันเตือนซ้ำ
+
+  brandId    String
+  brand      Brand  @relation(fields: [brandId], references: [id])
+  assigneeId String?
+  assignee   User?  @relation("Assignee", fields: [assigneeId], references: [id])
+  creatorId  String
+  creator    User   @relation("Creator", fields: [creatorId], references: [id])
+
+  attachments Attachment[]
+  comments    Comment[]
+  history     StatusHistory[]
+  tags        TaskTag[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([brandId, publishDate])
+  @@index([status])
+  @@index([publishDate])
+}
+
+model Attachment {
+  id       String         @id @default(cuid())
+  taskId   String
+  task     ContentTask    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  kind     AttachmentKind
+  fileName String
+  mimeType String
+  size     Int            // bytes
+  key      String         // path ใน storage
+  url      String         // public/signed URL
+  uploadedAt DateTime     @default(now())
+
+  @@index([taskId])
+}
+
+model Tag {
+  id    String @id @default(cuid())
+  name  String @unique // เช่น "โปรโมชัน", "Reel", "ลูกค้าส่งมา"
+  color String @default("#64748B")
+  tasks TaskTag[]
+}
+
+model TaskTag {
+  taskId String
+  tagId  String
+  task   ContentTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  tag    Tag         @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, tagId])
+}
+
+model Comment {
+  id        String      @id @default(cuid())
+  taskId    String
+  task      ContentTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User        @relation(fields: [authorId], references: [id])
+  body      String      @db.Text
+  createdAt DateTime    @default(now())
+
+  @@index([taskId])
+}
+
+model StatusHistory {
+  id         String        @id @default(cuid())
+  taskId     String
+  task       ContentTask   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  fromStatus ContentStatus?
+  toStatus   ContentStatus
+  changedById String
+  changedBy  User          @relation(fields: [changedById], references: [id])
+  changedAt  DateTime      @default(now())
+
+  @@index([taskId])
+}

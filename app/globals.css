@@ -1,0 +1,79 @@
+/* app/globals.css  (Tailwind v3.4+) */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ------------------------------------------------------------------
+   Design tokens ต่อ "โลก" ของแบรนด์
+   - ค่าเริ่มต้น = Kudsan (ส้ม)  | [data-brand="BL"] = Bellinee's (น้ำตาล)
+   - light-dark() ทำให้ 1 token รองรับทั้งโหมดสว่าง/มืดโดยไม่ต้องเขียนซ้ำ
+   - สลับแบรนด์ = เปลี่ยน attribute เดียวที่ <html> ทุกคอมโพเนนต์เปลี่ยนสีเอง
+------------------------------------------------------------------- */
+:root {
+  color-scheme: light;
+  --bg:        light-dark(#FFF6EC, #1C110A);
+  --surface:   light-dark(#FFFFFF, #2A1A0F);
+  --surface-2: light-dark(#FFE9D2, #3A2415);
+  --line:      light-dark(#F4D2AE, #56391F);
+  --fg:        light-dark(#2B1708, #FFEBD6);
+  --muted:     light-dark(#7A4F2A, #D2A77C);
+  --accent:    light-dark(#D9480F, #FF922B);
+  --on-accent: light-dark(#FFFFFF, #1C110A);
+  --brand:     light-dark(#F76707, #FF922B);
+  --hero-a:    light-dark(#FFB347, #B93A0B);
+  --hero-b:    light-dark(#FF7A1A, #7A2A0A);
+  --hero-fg:   light-dark(#2B1708, #FFEBD6);
+  --r: 14px;                                   /* KS: มนสดใส */
+  --f-head: 'Prompt', system-ui, sans-serif;
+}
+
+:root[data-brand='BL'] {
+  --bg:        light-dark(#F4EDE6, #1A120D);
+  --surface:   light-dark(#FFFCF9, #241913);
+  --surface-2: light-dark(#E9DDD1, #31231A);
+  --line:      light-dark(#D3BFAE, #4A3728);
+  --fg:        light-dark(#2A1D15, #F3E6D8);
+  --muted:     light-dark(#6B5242, #BBA48F);
+  --accent:    light-dark(#6F4A32, #D2A679);
+  --on-accent: light-dark(#FFF8F1, #1A120D);
+  --brand:     light-dark(#8B5E3C, #D2A679);
+  --hero-a:    light-dark(#7B5238, #3A2619);
+  --hero-b:    light-dark(#4A2F20, #231610);
+  --hero-fg:   light-dark(#FFF3E6, #F3E6D8);
+  --r: 6px;                                    /* BL: เหลี่ยมนุ่มแบบพรีเมียม */
+  --f-head: 'Noto Serif Thai', Georgia, serif;
+}
+
+/* โหมดสว่าง/มืด: ตามระบบ และให้ปุ่ม toggle ของแอปเขียนทับได้ด้วย data-theme */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) { color-scheme: dark; }
+}
+:root[data-theme='dark'] { color-scheme: dark; }
+
+@layer base {
+  body { @apply bg-bg text-fg font-body transition-colors duration-500; }
+}
+
+/* ------------------------------------------------------------------
+   BrandSwitch: ส่วนที่ Tailwind utility เขียนยาก (gradient/mask) แยกเป็น component class
+------------------------------------------------------------------- */
+@layer components {
+  .bs-ks { background: linear-gradient(100deg, #FFC13D, #FF8A1F 55%, #E8590C); }
+  .bs-bl { background: linear-gradient(100deg, #6B4630, #47291A 55%, #2A1810); }
+
+  .bs-sun-rays {
+    background: repeating-conic-gradient(from 0deg, rgba(255,170,30,.95) 0 8deg, transparent 8deg 30deg);
+    -webkit-mask: radial-gradient(circle, transparent 58%, #000 60%);
+            mask: radial-gradient(circle, transparent 58%, #000 60%);
+  }
+  .bs-sun  { background: radial-gradient(circle at 35% 30%, #FFF2A8, #FFC21A 55%, #FF8A00); box-shadow: 0 0 14px #FFC21A; }
+  .bs-bean { background: radial-gradient(circle at 35% 30%, #F3DCB8, #C0925A 58%, #80562F); box-shadow: 0 0 16px rgba(233,198,133,.7); }
+
+  .bs-wipe-KS { background: #FF7A1A; color: #2B1708; }
+  .bs-wipe-BL { background: #3A2417; color: #F3E6D8; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .bs-sun-rays { animation: bs-spin 14s linear infinite; }
+}
+@keyframes bs-spin { to { transform: rotate(360deg); } }

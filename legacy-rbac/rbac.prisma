@@ -1,0 +1,86 @@
+// prisma/schema.prisma  — ส่วนที่เพิ่ม/แก้เพื่อทำ RBAC
+// (รวมเข้ากับ schema เดิม: Brand, ContentTask, Comment, StatusHistory, Tag ยังคงเหมือนเดิม)
+
+enum Role {
+  ADMIN    // จัดการสมาชิก + ทุกอย่างของแบรนด์
+  MANAGER  // คนเขียนบรีฟ / คุมคิว: Full CRUD, Approve/Reject
+  VIEWER   // กราฟิก / ทีมรับบรีฟ: อ่าน + ส่งงานที่ได้รับมอบหมาย
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  avatarUrl    String?
+  lineUserId   String?
+  isActive     Boolean  @default(true)   // ปิดบัญชีโดยไม่ลบประวัติ
+  isSuperAdmin Boolean  @default(false)  // ข้ามทุกแบรนด์ ใช้น้อยที่สุด
+  createdAt    DateTime @default(now())
+
+  memberships   BrandMembership[]
+  assignedTasks ContentTask[]     @relation("Assignee")
+  createdTasks  ContentTask[]     @relation("Creator")
+  uploads       Attachment[]      @relation("Uploader")
+  reviews       Review[]
+  comments      Comment[]
+  statusChanges StatusHistory[]
+}
+
+// สิทธิ์ผูกกับ "แบรนด์" คนเดียวเป็น MANAGER ของ KS และ VIEWER ของ BL ได้
+model BrandMembership {
+  id        String   @id @default(cuid())
+  userId    String
+  brandId   String
+  role      Role
+  createdAt DateTime @default(now())
+  createdBy String?  // ใครเป็นคนเพิ่ม (audit)
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  brand Brand @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, brandId])
+  @@index([brandId, role])
+}
+
+// ใน model Brand เดิมให้เพิ่ม:
+//   memberships BrandMembership[]
+
+enum AttachmentPurpose {
+  REFERENCE    // ไฟล์บรีฟ/อ้างอิง จากผู้เขียนบรีฟ
+  DELIVERABLE  // ไฟล์ส่งงาน จากกราฟิก
+}
+
+// ใน model Attachment เดิมให้เพิ่ม:
+//   purpose      AttachmentPurpose @default(REFERENCE)
+//   uploadedById String
+//   uploadedBy   User              @relation("Uploader", fields: [uploadedById], references: [id])
+//   @@index([taskId, purpose])
+
+enum ReviewDecision {
+  APPROVED
+  REJECTED
+}
+
+// ผลตรวจแต่ละรอบ เก็บประวัติครบว่าถูกตีกลับกี่ครั้ง ด้วยเหตุผลอะไร
+model Review {
+  id         String         @id @default(cuid())
+  taskId     String
+  reviewerId String
+  decision   ReviewDecision
+  comment    String?        @db.Text // REJECTED ต้องมี (บังคับที่ API)
+  roundNo    Int            // รอบที่ตรวจ เริ่มที่ 1
+  createdAt  DateTime       @default(now())
+
+  task     ContentTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  reviewer User        @relation(fields: [reviewerId], references: [id])
+
+  @@index([taskId, roundNo])
+}
+
+// ใน model ContentTask เดิมให้เพิ่ม:
+//   submittedAt   DateTime?
+//   revisionRound Int       @default(0)
+//   reviews       Review[]
+//
+// ใน model ContentTask เดิม ฟิลด์ assigneeId / assignee (User) มีอยู่แล้ว
+// = "งานของคนนี้" ซึ่งเป็นตัวตัดสินสิทธิ์ของ VIEWER
