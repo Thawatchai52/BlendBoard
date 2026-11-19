@@ -365,6 +365,49 @@ input:disabled,select:disabled,textarea:disabled{opacity:.8;cursor:default}
   .mb{grid-template-columns:minmax(0,1fr)}
   .nav .month{min-width:120px}
 }
+
+/* ---------- TikTok analytics ---------- */
+#tt{display:flex;flex-direction:column;gap:16px}
+.tt-head h2{margin:0;font-family:var(--f-head);font-size:22px}
+.tt-rule{margin:4px 0 0;font-size:13px;color:var(--muted)}
+.tt-sim{margin:0;font-size:12px;color:var(--muted);border:1px dashed var(--line);border-radius:var(--r);padding:8px 12px}
+.tt-form{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:8px}
+.tt-form label{font-weight:600;font-size:14px}
+.tt-row{display:flex;gap:8px;flex-wrap:wrap}
+.tt-row input{flex:1 1 260px;min-width:0;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:var(--r);padding:10px 12px;font-size:15px}
+.tt-msg{margin:0;min-height:20px;font-size:13px;color:var(--muted)}
+.tt-msg.err{color:#C92A2A}
+.tt-msg.ok{color:#2B8A3E}
+.tt-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.tt-stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+.tt-stat span{display:block;font-size:12px;color:var(--muted)}
+.tt-stat b{display:block;margin-top:2px;font-family:var(--f-head);font-size:24px;font-weight:600;font-variant-numeric:tabular-nums}
+.tt-chips{display:flex;flex-wrap:wrap;gap:8px}
+.tt-chips button{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:99px;padding:5px 13px;font-size:13px}
+.tt-chips button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:600}
+.tt-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.tt-table{width:100%;min-width:900px;border-collapse:collapse;font-size:13.5px}
+.tt-table th{background:var(--surface-2);color:var(--muted);font-weight:500;font-size:12px;text-align:right;padding:8px 10px;white-space:nowrap}
+.tt-table th:first-child,.tt-table td:first-child,.tt-table th.l,.tt-table td.l{text-align:left}
+.tt-table th button{border:0;background:transparent;color:inherit;font:inherit;padding:0;cursor:pointer}
+.tt-table th button:hover{color:var(--fg)}
+.tt-table td{padding:9px 10px;border-top:1px solid var(--line);text-align:right;vertical-align:top;font-variant-numeric:tabular-nums}
+.tt-clip{max-width:240px}
+.tt-clip a{display:block;font-weight:600;color:var(--accent);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tt-clip a:hover{text-decoration:underline}
+.tt-clip small{display:block;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tt-viral{display:inline-block;white-space:nowrap;background:var(--accent);color:var(--on-accent);border-radius:99px;padding:2px 10px;font-size:12px;font-weight:700}
+.tt-chip{display:inline-block;white-space:nowrap;border-radius:99px;padding:2px 10px;font-size:12px;font-weight:500;background:var(--surface-2);color:var(--muted)}
+.tt-chip.bad{background:#FFE3E3;color:#C92A2A}
+.tt-act{display:flex;gap:6px;justify-content:flex-end}
+.tt-act button{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:calc(var(--r) - 4px);padding:3px 9px;font-size:12px}
+.tt-act button:disabled{opacity:.5}
+.tt-act button.armed{background:#C92A2A;border-color:#C92A2A;color:#fff}
+.tt-empty{padding:28px 12px;text-align:center;color:var(--muted)}
+.tt-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.tt-list li{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:10px 14px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.tt-list a{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--accent);text-decoration:none}
+.rolebar .seg{margin-left:auto}
 </style>
 
 <section class="landing" id="landing" aria-labelledby="lTitle">
@@ -411,6 +454,10 @@ input:disabled,select:disabled,textarea:disabled{opacity:.8;cursor:default}
   <div class="rolebar" id="rolebar">
     <span class="rolebadge" id="uRoles"></span>
     <p class="perm" id="uPerm"></p>
+    <div class="seg" id="topNav" role="group" aria-label="หน้า">
+      <button type="button" id="navCal" aria-pressed="true">ปฏิทิน</button>
+      <button type="button" id="navTT" aria-pressed="false">สถิติ TikTok</button>
+    </div>
     <button type="button" class="btn" id="logoutBtn">ออกจากระบบ</button>
   </div>
 
@@ -465,6 +512,29 @@ input:disabled,select:disabled,textarea:disabled{opacity:.8;cursor:default}
     <aside class="filters" id="filters" aria-label="ตัวกรอง"></aside>
     <main id="view"></main>
   </div>
+
+  <section id="tt" hidden aria-labelledby="ttH">
+    <div class="tt-head">
+      <h2 id="ttH">สถิติคลิป TikTok</h2>
+      <p class="tt-rule" id="ttRule">ER = (ไลก์ + คอมเมนต์ + แชร์ + เซฟ) ÷ วิว × 100 · ติดป้าย 🔥 แมสแตก! เมื่อ ER ≥ 10% และวิว ≥ 50,000</p>
+    </div>
+    <p class="tt-sim">ต้นแบบนี้ตัวเลขสถิติ <b>จำลองขึ้นจากลิงก์</b> ไม่ได้ดึงจาก TikTok จริง (ลิงก์เดิมได้ตัวเลขเดิมเสมอ) · ลองวางลิงก์ที่มีคำว่า <code>notfound</code> เพื่อดูกรณีดึงข้อมูลไม่ได้ · ของจริงดึงผ่าน API ฝั่งเซิร์ฟเวอร์</p>
+    <form class="tt-form" id="ttForm" novalidate>
+      <label for="ttUrl">ลิงก์ TikTok</label>
+      <div class="tt-row">
+        <input id="ttUrl" type="url" inputmode="url" autocomplete="off" placeholder="https://www.tiktok.com/@ชื่อช่อง/video/...">
+        <button type="submit" class="btn primary" id="ttSend">ส่ง</button>
+      </div>
+      <p class="tt-msg" id="ttMsg" role="status"></p>
+    </form>
+    <div id="ttAdmin" hidden>
+      <div class="tt-stats" id="ttStats"></div>
+      <div class="tt-chips" id="ttChips" role="group" aria-label="กรองรายการ" style="margin:12px 0"></div>
+      <div class="tt-wrap"><table class="tt-table" id="ttTable"></table></div>
+      <p style="margin:10px 0 0"><button type="button" class="btn" id="ttReset">โหลดตัวอย่างใหม่</button></p>
+    </div>
+    <div id="ttViewer" hidden></div>
+  </section>
 </div>
 
 <dialog id="viewDlg" aria-label="ดูไฟล์">
@@ -798,6 +868,165 @@ function applyBrand(b,silent){
   applyRole();
   render();
 }
+/* ---------- TikTok analytics (ข้อมูลจำลอง) ---------- */
+var TKEY='content-calendar-tt-v1';
+var VIRAL_ER=10,VIRAL_VIEWS=50000;
+var tts=[],ttFilter='ALL',ttSort={k:'at',d:-1},section='cal';
+function ttInter(c){return (c.likes||0)+(c.comments||0)+(c.shares||0)+(c.saves||0)}
+function ttER(c){return c.views>0?Math.round(ttInter(c)*100/c.views*100)/100:null}
+/* เทียบด้วยจำนวนเต็ม (inter*100 >= views*10) กัน ER 10.00% เป๊ะหลุดเพราะทศนิยม */
+function ttViral(c){return c.views!=null&&c.views>=VIRAL_VIEWS&&ttInter(c)*100>=c.views*VIRAL_ER}
+function parseTT(input){
+  var raw=String(input||'').trim();
+  if(!raw)return {ok:false,reason:'กรุณาวางลิงก์ TikTok'};
+  if(raw.length>300)return {ok:false,reason:'ลิงก์ยาวเกินไป'};
+  if(!/^[a-z][a-z0-9+.-]*:/i.test(raw))raw='https://'+raw;
+  var u;try{u=new URL(raw)}catch(e){return {ok:false,reason:'รูปแบบลิงก์ไม่ถูกต้อง'}}
+  if(u.protocol!=='https:'&&u.protocol!=='http:')return {ok:false,reason:'รองรับเฉพาะลิงก์ https'};
+  if(u.username||u.password)return {ok:false,reason:'ลิงก์ไม่ถูกต้อง'};
+  if(!/^(?:www\.|m\.|vm\.|vt\.)?tiktok\.com$/i.test(u.hostname))return {ok:false,reason:'ต้องเป็นลิงก์จาก tiktok.com เท่านั้น'};
+  var path=u.pathname.replace(/\/+$/,'');
+  var m=/\/(?:video|photo|v)\/(\d{6,25})(?:\.html)?(?:\/|$)/.exec(path+'/');
+  var short=/^(?:vm|vt)\./i.test(u.hostname)||/^\/t\/[\w-]+$/.test(path);
+  if(!m&&!short)return {ok:false,reason:'ไม่ใช่ลิงก์คลิป TikTok (ต้องมี /video/เลขไอดี หรือเป็นลิงก์แชร์แบบสั้น)'};
+  var host=m?'www.tiktok.com':u.hostname.toLowerCase();
+  var au=/\/@([\w.]+)\//.exec(path+'/');
+  return {ok:true,url:'https://'+host+path,videoId:m?m[1]:null,author:au?au[1]:null};
+}
+function hashStr(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
+function rng(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+var TT_NAMES=['kudsan.official','bellinee.shop','kudsan_review','bellinee_daily'];
+function fakeStats(url){
+  var r=rng(hashStr(url));
+  var views=Math.round(6000+Math.pow(r(),2.3)*420000);
+  var er=2+r()*14,inter=views*er/100;
+  var likes=Math.round(inter*(.74+r()*.08)),comments=Math.round(inter*(.02+r()*.03));
+  var shares=Math.round(inter*(.06+r()*.05)),saves=Math.max(0,Math.round(inter)-likes-comments-shares);
+  return {views:views,likes:likes,comments:comments,shares:shares,saves:saves,pick:TT_NAMES[Math.floor(r()*TT_NAMES.length)]};
+}
+function ttSave(){try{localStorage.setItem(TKEY,JSON.stringify(tts))}catch(e){}}
+function ttSeed(){
+  var n=Date.now(),H=3600000;
+  function C(b,id,au,cap,v,l,c,sh,sv,h){return {id:'tt'+id,brand:b,url:'https://www.tiktok.com/@'+au+'/video/73012345678900'+id,author:au,caption:cap,status:'OK',views:v,likes:l,comments:c,shares:sh,saves:sv,at:n-h*H,fetchedAt:n-h*H/2}}
+  return [
+    C('KS','1001','kudsan.official','รีวิวจากลูกค้า EP.1 | ใช้จริง 7 วัน',182400,17250,640,1380,2910,70),
+    C('KS','1002','kudsan.official','ขั้นตอนใช้งานสินค้า 3 สเต็ป',54000,3900,180,410,620,52),
+    C('KS','1003','kudsan_review','Flash Sale 11.11 สรุปยอด (วิวไม่ถึงเกณฑ์)',49500,5200,210,300,800,40),
+    C('KS','1004','kudsan.official','โปรโมชันปลายปี: ทีเซอร์',310000,12000,400,1500,900,30),
+    C('KS','1005','kudsan_review','ของขวัญปีใหม่ แนะนำ 5 ชิ้น',22300,1500,70,120,160,16),
+    {id:'tt1006',brand:'KS',url:'https://www.tiktok.com/@kudsan.official/video/7301234567890091006',author:'kudsan.official',caption:null,status:'FAILED',error:'ไม่พบข้อมูลคลิปนี้ (อาจถูกลบหรือเป็นส่วนตัว)',at:n-8*H},
+    C('BL','2001','bellinee.shop','Behind the scene ถ่ายแบบ',50000,3600,300,500,600,66),
+    C('BL','2002','bellinee_daily','ไอเดียแต่งตัวรับอากาศเย็น',128000,9800,520,1700,2400,48),
+    C('BL','2003','bellinee.shop','เปิดตัวสินค้าใหม่ Bellinee\'s',76500,4100,260,380,610,34),
+    C('BL','2004','bellinee_daily','Q&A ตอบคำถามลูกค้า',9800,520,44,31,60,12),
+    C('BL','2005','bellinee.shop','คอลเลกชันพิเศษ Black Friday',240000,21000,880,3900,5200,22)
+  ];
+}
+function ttLoad(){
+  var raw=null;try{raw=localStorage.getItem(TKEY)}catch(e){}
+  if(raw){try{var a=JSON.parse(raw);if(Array.isArray(a)){tts=a;return}}catch(e){}}
+  tts=ttSeed();
+}
+function ttFetch(it,growth){
+  it.status='FETCHING';ttSave();renderTT();
+  setTimeout(function(){
+    if(/notfound/i.test(it.url)){it.status='FAILED';it.error='ไม่พบข้อมูลคลิปนี้ (อาจถูกลบหรือเป็นส่วนตัว)'}
+    else if(growth){
+      var g=function(x){return Math.round((x||0)*(1+.02+Math.random()*.05))};
+      it.views=g(it.views);it.likes=g(it.likes);it.comments=g(it.comments);it.shares=g(it.shares);it.saves=g(it.saves);
+      it.status='OK';it.error=null;it.fetchedAt=Date.now();
+    }else{
+      var f=fakeStats(it.url);
+      it.views=f.views;it.likes=f.likes;it.comments=f.comments;it.shares=f.shares;it.saves=f.saves;
+      if(!it.author)it.author=f.pick;
+      it.status='OK';it.error=null;it.fetchedAt=Date.now();
+    }
+    ttSave();renderTT();
+  },growth?900:1500);
+}
+function nf(n){return n==null?'–':Number(n).toLocaleString('en-US')}
+function ttMine(){return tts.filter(function(t){return t.brand===curBrand})}
+function renderTT(){
+  if(section!=='tt')return;
+  var mgr=isMgr(),list=ttMine();
+  $('#ttAdmin').hidden=!mgr;$('#ttViewer').hidden=mgr;
+  if(!mgr){
+    var v=list.slice().sort(function(a,b){return b.at-a.at});
+    $('#ttViewer').innerHTML='<h3 style="margin:0 0 8px;font-size:15px">ลิงก์ที่ส่งแล้ว ('+v.length+')</h3>'+
+      (v.length?'<ul class="tt-list">'+v.map(function(t){
+        return '<li><a href="'+esc(t.url)+'" target="_blank" rel="noopener noreferrer">'+esc(t.url.replace('https://',''))+'</a><span class="tt-chip'+(t.status==='FAILED'?' bad':'')+'">'+(t.status==='OK'?'ส่งแล้ว':t.status==='FAILED'?'ดึงข้อมูลไม่สำเร็จ':'กำลังดึงข้อมูล')+'</span></li>';
+      }).join('')+'</ul>':'<p class="tt-empty">ยังไม่มีลิงก์ที่ส่ง วางลิงก์ในช่องด้านบนได้เลย</p>')+
+      '<p class="tt-msg" style="margin-top:10px">ดูสถิติได้เฉพาะ Admin</p>';
+    return;
+  }
+  var ok=list.filter(function(t){return t.status==='OK'});
+  var ers=ok.map(ttER).filter(function(x){return x!=null});
+  var vir=ok.filter(ttViral).length;
+  var tv=ok.reduce(function(s,t){return s+(t.views||0)},0);
+  var avg=ers.length?ers.reduce(function(a,b){return a+b},0)/ers.length:null;
+  $('#ttStats').innerHTML=
+    '<div class="tt-stat"><span>คลิปทั้งหมด</span><b>'+list.length+'</b></div>'+
+    '<div class="tt-stat"><span>🔥 แมสแตก</span><b id="ttViralN">'+vir+'</b></div>'+
+    '<div class="tt-stat"><span>ยอดวิวรวม</span><b>'+nf(tv)+'</b></div>'+
+    '<div class="tt-stat"><span>ER เฉลี่ยต่อคลิป</span><b>'+(avg==null?'–':avg.toFixed(2)+'%')+'</b></div>';
+  var chips=[['ALL','ทั้งหมด'],['VIRAL','🔥 แมสแตก'],['WAIT','รอดึง'],['FAILED','ดึงไม่สำเร็จ']];
+  $('#ttChips').innerHTML=chips.map(function(c){return '<button type="button" data-ttf="'+c[0]+'" aria-pressed="'+(ttFilter===c[0])+'">'+c[1]+'</button>'}).join('');
+  var rows=list.filter(function(t){
+    return ttFilter==='ALL'?true:ttFilter==='VIRAL'?(t.status==='OK'&&ttViral(t)):ttFilter==='WAIT'?(t.status==='PENDING'||t.status==='FETCHING'):t.status==='FAILED';
+  });
+  var key=function(t){return ttSort.k==='at'?t.at:ttSort.k==='views'?(t.status==='OK'?t.views:null):(t.status==='OK'?ttER(t):null)};
+  rows.sort(function(a,b){var x=key(a),y=key(b);if(x==null&&y==null)return 0;if(x==null)return 1;if(y==null)return -1;return (x-y)*ttSort.d});
+  function th(k,l,cls){var on=ttSort.k===k;return '<th'+(cls?' class="'+cls+'"':'')+' aria-sort="'+(on?(ttSort.d===1?'ascending':'descending'):'none')+'"><button type="button" data-tts="'+k+'">'+l+(on?(ttSort.d===1?' ▲':' ▼'):'')+'</button></th>'}
+  var head='<thead><tr><th>คลิป</th>'+th('views','วิว')+'<th>ไลก์</th><th>คอมเมนต์</th><th>แชร์</th><th>เซฟ</th>'+th('er','ER')+'<th class="l">สถานะ</th>'+th('at','ส่งเมื่อ','l')+'<th><span class="sr-only" style="position:absolute;left:-9999px">จัดการ</span></th></tr></thead>';
+  var body=rows.length?rows.map(function(t){
+    var isOk=t.status==='OK',er=isOk?ttER(t):null,d=new Date(t.at);
+    var badge=isOk&&ttViral(t)?'<span class="tt-viral">🔥 แมสแตก!</span>':(isOk?'':'<span class="tt-chip'+(t.status==='FAILED'?' bad':'')+'" title="'+esc(t.error||'')+'">'+(t.status==='FAILED'?'ดึงไม่สำเร็จ':t.status==='FETCHING'?'กำลังดึง...':'รอดึงข้อมูล')+'</span>');
+    return '<tr data-id="'+t.id+'">'+
+      '<td class="tt-clip"><a href="'+esc(t.url)+'" target="_blank" rel="noopener noreferrer">@'+esc(t.author||'ลิงก์สั้น')+'</a>'+(t.caption?'<small title="'+esc(t.caption)+'">'+esc(t.caption)+'</small>':(t.status==='FAILED'&&t.error?'<small>'+esc(t.error)+'</small>':''))+'</td>'+
+      '<td>'+(isOk?nf(t.views):'–')+'</td><td>'+(isOk?nf(t.likes):'–')+'</td><td>'+(isOk?nf(t.comments):'–')+'</td><td>'+(isOk?nf(t.shares):'–')+'</td><td>'+(isOk?nf(t.saves):'–')+'</td>'+
+      '<td class="tt-er">'+(er==null?'–':er.toFixed(2)+'%')+'</td><td class="l">'+badge+'</td>'+
+      '<td class="l num" style="white-space:nowrap;color:var(--muted);font-size:12px">'+d.getDate()+' '+MSHORT[d.getMonth()]+' '+pad(d.getHours())+':'+pad(d.getMinutes())+'</td>'+
+      '<td><div class="tt-act"><button type="button" data-ttr="'+t.id+'"'+(t.status==='FETCHING'?' disabled':'')+'>อัปเดต</button><button type="button" data-ttd="'+t.id+'" aria-label="ลบคลิปนี้">ลบ</button></div></td></tr>';
+  }).join(''):'<tr><td colspan="10" class="tt-empty" style="text-align:center">'+(list.length?'ไม่มีรายการในตัวกรองนี้':'ยังไม่มีคลิป วางลิงก์ TikTok ในช่องด้านบนได้เลย')+'</td></tr>';
+  $('#ttTable').innerHTML=head+'<tbody>'+body+'</tbody>';
+}
+function setSection(s){
+  section=s;
+  ['.toolbar','.demo','.summary','.main'].forEach(function(q){var el=$('#app > '+q);if(el)el.hidden=(s==='tt')});
+  $('#tt').hidden=(s!=='tt');
+  $('#navCal').setAttribute('aria-pressed',s==='cal');
+  $('#navTT').setAttribute('aria-pressed',s==='tt');
+  if(s==='tt')renderTT();else render();
+}
+$('#navCal').addEventListener('click',function(){setSection('cal')});
+$('#navTT').addEventListener('click',function(){setSection('tt')});
+$('#ttForm').addEventListener('submit',function(e){
+  e.preventDefault();
+  var msg=$('#ttMsg');msg.className='tt-msg';
+  var p=parseTT($('#ttUrl').value);
+  if(!p.ok){msg.textContent=p.reason;msg.classList.add('err');return}
+  var dup=tts.some(function(t){return t.url===p.url||(p.videoId&&t.videoId===p.videoId)});
+  if(dup){msg.textContent='ลิงก์นี้เคยส่งแล้ว ไม่ต้องส่งซ้ำ';return}
+  var it={id:uid(),brand:curBrand,url:p.url,videoId:p.videoId,author:p.author,caption:null,status:'PENDING',at:Date.now()};
+  tts.push(it);ttSave();
+  $('#ttUrl').value='';msg.textContent='ส่งลิงก์แล้ว ระบบกำลังดึงสถิติ';msg.classList.add('ok');
+  renderTT();ttFetch(it,false);
+});
+$('#tt').addEventListener('click',function(e){
+  var f=e.target.closest('[data-ttf]');if(f){ttFilter=f.dataset.ttf;renderTT();return}
+  var so=e.target.closest('[data-tts]');if(so){var k=so.dataset.tts;ttSort=ttSort.k===k?{k:k,d:-ttSort.d}:{k:k,d:-1};renderTT();return}
+  var r=e.target.closest('[data-ttr]');
+  if(r&&isMgr()){var it=tts.filter(function(t){return t.id===r.dataset.ttr})[0];if(it&&it.status!=='FETCHING')ttFetch(it,it.status==='OK');return}
+  var d=e.target.closest('[data-ttd]');
+  if(d&&isMgr()){
+    if(!d.classList.contains('armed')){d.classList.add('armed');d.textContent='ยืนยันลบ';setTimeout(function(){if(d.isConnected){d.classList.remove('armed');d.textContent='ลบ'}},3000);return}
+    tts=tts.filter(function(t){return t.id!==d.dataset.ttd});ttSave();renderTT();toast('ลบคลิปแล้ว');
+  }
+});
+$('#ttReset').addEventListener('click',function(){if(!isMgr())return;tts=ttSeed();ttSave();renderTT();toast('โหลดข้อมูลตัวอย่างใหม่แล้ว')});
+ttLoad();
+tts.forEach(function(t){if(t.status==='PENDING'||t.status==='FETCHING')ttFetch(t,false)});   /* คลิปที่ค้างตอนปิดหน้า ให้ดึงต่อ */
+
 /* ---------- ปรับ UI ตามสิทธิ์ของประตูที่เลือก ---------- */
 function applyRole(){
   var mgr=isMgr();
@@ -813,6 +1042,7 @@ function applyRole(){
   $('#demoText').textContent=mgr
     ?'ข้อมูลที่เห็นเป็นตัวอย่าง ลากการ์ดเพื่อเลื่อนวันหรือเปลี่ยนสถานะ ข้อมูลเก็บในเบราว์เซอร์เครื่องนี้'
     :'ข้อมูลที่เห็นเป็นตัวอย่าง ตอนนี้เป็นโหมดอ่านอย่างเดียว เปิดงานเพื่ออ่านบรีฟ อัปโหลดไฟล์ส่งงาน และส่งตรวจได้';
+  if(section==='tt')renderTT();
 }
 
 /* ---------- ประตูทางเข้า: เช็ครหัสผ่านก่อนเข้า Dashboard ---------- */
@@ -823,14 +1053,14 @@ function showApp(r){
   role=r;
   try{sessionStorage.setItem(SKEY,r)}catch(e){}   // ปิดแท็บ = ออกจากระบบ
   $('#landing').hidden=true;$('#app').hidden=false;
-  applyRole();render();window.scrollTo(0,0);
+  setSection('cal');applyRole();render();window.scrollTo(0,0);
 }
 function logout(){
   role=null;
   try{sessionStorage.removeItem(SKEY)}catch(e){}
   closeModal();if(pw.open)pw.close();$('#toast').hidden=true;
   $('#app').hidden=true;$('#landing').hidden=false;
-  applyRole();window.scrollTo(0,0);
+  setSection('cal');applyRole();window.scrollTo(0,0);
 }
 function openPw(){
   var i=$('#pwInput');
