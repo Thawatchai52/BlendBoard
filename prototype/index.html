@@ -213,6 +213,7 @@ body.switching .hero-switch{position:relative;z-index:70}
 .due{font-size:11px;border-radius:4px;padding:1px 6px;font-weight:500}
 .due.warn{background:var(--s-review-bg);color:var(--s-review)}
 .due.bad{background:var(--s-revision-bg);color:var(--s-revision)}
+.due.ok{background:var(--s-posted-bg);color:var(--s-posted)}
 .clip{margin-left:auto;font-size:11px;color:var(--muted)}
 .empty{color:var(--muted);font-size:12px;text-align:center;padding:14px 4px}
 
@@ -272,6 +273,7 @@ body.viewer .chip,body.viewer .card{cursor:pointer}
 input:disabled,select:disabled,textarea:disabled{opacity:.8;cursor:default}
 .plats input:disabled+span{opacity:.85;cursor:default}
 #flow{display:flex;flex-direction:column;gap:10px}
+.statebox{display:block;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface-2);font-weight:600}
 .panel{display:flex;flex-direction:column;gap:10px;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r);padding:12px}
 .panel h3{margin:0;font-family:var(--f-head);font-size:14px}
 .row{display:flex;flex-wrap:wrap;gap:8px}
@@ -509,7 +511,7 @@ input:disabled,select:disabled,textarea:disabled{opacity:.8;cursor:default}
   </div>
 
   <div class="demo">
-    <span id="demoText">ข้อมูลที่เห็นเป็นตัวอย่าง ลากการ์ดเพื่อเลื่อนวันหรือเปลี่ยนสถานะ ข้อมูลเก็บในเบราว์เซอร์เครื่องนี้</span>
+    <span id="demoText">ข้อมูลที่เห็นเป็นตัวอย่าง ลากการ์ดเพื่อเลื่อนวัน ข้อมูลเก็บในเบราว์เซอร์เครื่องนี้</span>
     <button id="clearDemo">ล้างข้อมูลตัวอย่างทั้งหมด</button>
     <button id="resetDemo">โหลดตัวอย่างใหม่</button>
   </div>
@@ -527,8 +529,8 @@ input:disabled,select:disabled,textarea:disabled{opacity:.8;cursor:default}
       <p class="tt-rule" id="ttRule">ER = (ไลก์ + คอมเมนต์ + แชร์ + เซฟ) ÷ วิว × 100 · ติดป้าย 🔥 แมสแตก! เมื่อ ER ≥ 10% และวิว ≥ 50,000</p>
     </div>
     <div class="tt-how">
-      <b>ลิงก์ TikTok มาจากช่องส่งงานของแต่ละงาน</b>
-      <p>คนส่งงานเปิดงานในปฏิทิน แล้ววางลิงก์ในช่อง "หรือส่งเป็นลิงก์ TikTok" ในส่วนไฟล์ส่งงาน ระบบหลังบ้านจะดึงยอดและคำนวณ ER ให้อัตโนมัติ ลบลิงก์หรือลบงานเมื่อไร สถิติของคลิปนั้นก็หายตาม</p>
+      <b>ลิงก์ TikTok มาจากช่องลิงก์ในแต่ละงาน</b>
+      <p>เมื่อคอนเทนต์ลง TikTok แล้ว ให้เปิดงานในปฏิทินแล้ววางลิงก์คลิปในช่อง "ลิงก์ TikTok ที่ลงแล้ว" งานนั้นจะขึ้นว่า "ลง TikTok แล้ว" ให้ทั้งสองฝั่งเห็น และระบบหลังบ้านจะดึงยอดคำนวณ ER ให้ ลบลิงก์หรือลบงานเมื่อไร สถิติของคลิปนั้นก็หายตาม</p>
       <p class="tt-simnote">ต้นแบบนี้ตัวเลขสถิติ <b>จำลองขึ้นจากลิงก์</b> ไม่ได้ดึงจาก TikTok จริง (ลิงก์เดิมได้ตัวเลขเดิมเสมอ) · ของจริงดึงผ่าน API ฝั่งเซิร์ฟเวอร์</p>
     </div>
     <div id="ttAdmin" hidden>
@@ -559,21 +561,19 @@ input:disabled,select:disabled,textarea:disabled{opacity:.8;cursor:default}
           <span class="err" id="eTitle"></span></label>
         <div class="row2">
           <label class="fld"><span>แบรนด์ (ล็อกตามโลกที่เลือก)</span><select id="fBrand" disabled></select></label>
-          <label class="fld"><span>สถานะ</span><select id="fStatus"></select></label>
+          <label class="fld"><span>สถานะ (ดูจากลิงก์ TikTok)</span><output id="fState" class="statebox"></output></label>
         </div>
         <div class="fld"><span class="lbl">แพลตฟอร์มเป้าหมาย</span>
           <div class="plats" id="fPlats"></div>
           <span class="err" id="ePlats"></span></div>
         <div class="row2">
           <label class="fld"><span>วัน-เวลาโพสต์</span><input type="datetime-local" id="fPub"><span class="err" id="ePub"></span></label>
-          <label class="fld"><span>กำหนดส่งบรีฟ/งาน</span><input type="datetime-local" id="fDue"></label>
         </div>
         <label class="fld"><span>Caption / Copywriting</span>
           <textarea id="fCaption" rows="7" placeholder="พิมพ์แคปชั่น แฮชแท็ก และ CTA"></textarea>
           <span class="count num" id="cCount">0 ตัวอักษร</span></label>
       </div>
       <div class="col-f">
-        <div id="flow" hidden></div>
         <div class="lbl">ไฟล์บรีฟ / Reference</div>
         <div class="drop" id="drop" tabindex="0" role="button" aria-label="อัปโหลดไฟล์บรีฟ">
           <strong>ลากไฟล์บรีฟมาวาง หรือคลิกเพื่อเลือก</strong>
@@ -581,14 +581,9 @@ input:disabled,select:disabled,textarea:disabled{opacity:.8;cursor:default}
           <input type="file" id="fFile" multiple hidden accept="image/*,video/*,.pdf,.doc,.docx,.ppt,.pptx">
         </div>
         <ul class="files" id="files"></ul>
-        <div class="lbl">ไฟล์ส่งงาน (Deliverable)</div>
-        <div class="drop" id="drop2" tabindex="0" role="button" aria-label="อัปโหลดไฟล์ส่งงาน">
-          <strong>อัปโหลดไฟล์ส่งงาน</strong>
-          <span>ลากมาวางหรือคลิกเลือก บันทึกให้ทันทีเมื่ออัปโหลดเสร็จ</span>
-          <input type="file" id="fFile2" multiple hidden accept="image/*,video/*,.pdf,.doc,.docx,.ppt,.pptx">
-        </div>
+        <div class="lbl">ลิงก์ TikTok ที่ลงแล้ว</div>
         <div id="linkRow" hidden>
-          <label class="lbl2" for="fLink">หรือส่งเป็นลิงก์ TikTok</label>
+          <label class="lbl2" for="fLink">วางลิงก์คลิป TikTok เมื่อโพสต์แล้ว (ทั้งแอดมินและฝั่งดูตารางส่งได้)</label>
           <div class="linkrow">
             <input type="url" id="fLink" inputmode="url" autocomplete="off" placeholder="https://www.tiktok.com/@.../video/...">
             <button type="button" id="addLink">เพิ่มลิงก์</button>
@@ -597,14 +592,6 @@ input:disabled,select:disabled,textarea:disabled{opacity:.8;cursor:default}
         <ul class="files" id="files2"></ul>
         <span class="err" id="eFile"></span>
         <p class="note">รูปภาพถูกย่อและเก็บไว้กับงาน ส่วนวิดีโอและเอกสารในต้นแบบนี้เก็บชั่วคราวจนกว่าจะปิดหน้า เวอร์ชันใช้งานจริงจะเก็บบน Storage ถาวร</p>
-        <div class="rev" id="revBox" hidden>
-          <label class="lbl" for="fRev">สิ่งที่ต้องแก้ (จากผู้ตรวจ)</label>
-          <textarea id="fRev" rows="3" placeholder="ระบุจุดที่ต้องแก้ไขให้ชัดเจน"></textarea>
-        </div>
-        <div id="histBox" hidden>
-          <div class="lbl">ประวัติสถานะ</div>
-          <ul class="hist" id="hist"></ul>
-        </div>
       </div>
     </div>
     <div class="mf">
@@ -622,11 +609,8 @@ input:disabled,select:disabled,textarea:disabled{opacity:.8;cursor:default}
 (function(){
 'use strict';
 var STATUSES=[
-  {id:'DRAFT',label:'Draft',c:'--s-draft',b:'--s-draft-bg'},
-  {id:'IN_REVIEW',label:'รอตรวจ',c:'--s-review',b:'--s-review-bg'},
-  {id:'REVISION',label:'ให้แก้',c:'--s-revision',b:'--s-revision-bg'},
-  {id:'APPROVED',label:'Approved',c:'--s-approved',b:'--s-approved-bg'},
-  {id:'POSTED',label:'Posted',c:'--s-posted',b:'--s-posted-bg'}];
+  {id:'DRAFT',label:'ยังไม่ลง TikTok',c:'--s-draft',b:'--s-draft-bg'},
+  {id:'POSTED',label:'ลง TikTok แล้ว',c:'--s-posted',b:'--s-posted-bg'}];
 var PLATS=[
   {id:'FB',label:'Facebook'},{id:'IG',label:'Instagram'},{id:'TT',label:'TikTok'},
   {id:'YT',label:'YouTube'},{id:'LN',label:'LINE OA'},{id:'X',label:'X'}];
@@ -638,7 +622,7 @@ var BRANDS={
 var MONTHS=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 var MSHORT=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 var DOW=['อา','จ','อ','พ','พฤ','ศ','ส'];
-var KEY='content-calendar-v3',BKEY='content-calendar-brand';
+var KEY='content-calendar-v4',BKEY='content-calendar-brand';
 
 function $(s,r){return (r||document).querySelector(s)}
 function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
@@ -654,27 +638,19 @@ function fmtSize(n){return n>1048576?(n/1048576).toFixed(1)+' MB':Math.max(1,Mat
 function reduced(){return window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches}
 
 /* ---------- สิทธิ์ 2 ฝั่ง (สะท้อน permissions.ts) ---------- */
-// role กำหนดจากประตูที่เลือกเข้ามา: 'VIEWER' = ฝั่งดูตารางและส่งงาน | 'ADMIN' = ฝั่งคนเขียนบรีฟและจัดการตาราง
+// role กำหนดจากประตูที่เลือกเข้ามา: 'VIEWER' = ฝั่งดูตาราง (ส่งลิงก์ TikTok ได้) | 'ADMIN' = ฝั่งคนเขียนบรีฟและจัดการตาราง
 var role=null;
-var VT={DRAFT:['IN_REVIEW'],REVISION:['IN_REVIEW'],IN_REVIEW:['DRAFT']};  // เส้นทางที่ Viewer เปลี่ยนสถานะได้
 function myRole(){return role}
 function isMgr(){return role==='ADMIN'}
 function can(action){
   if(isMgr())return true;
   if(role!=='VIEWER')return false;
-  return action==='view'||action==='download'||action==='submit'||action==='upload_deliverable';
+  return action==='view'||action==='download'||action==='link';   // ฝั่งดูตารางส่งได้แค่ลิงก์ TikTok
 }
-function checkTransition(t,to){
-  if(t.status===to)return {ok:false,reason:'งานอยู่ในสถานะนี้แล้ว'};
-  if(!role)return {ok:false,reason:'กรุณาเข้าสู่ระบบก่อน'};
-  if(isMgr())return {ok:true};
-  if((VT[t.status]||[]).indexOf(to)<0)return {ok:false,reason:'ฝั่งดูตารางเปลี่ยนสถานะนี้ไม่ได้ ต้องให้ Admin ดำเนินการ'};
-  return {ok:true};
-}
-function canUploadDel(){
-  if(isMgr())return true;
-  return role==='VIEWER'&&!!editing&&(editing.status==='DRAFT'||editing.status==='REVISION');
-}
+/* สถานะไม่มีการตรวจ/อนุมัติแล้ว: งานที่มีลิงก์ TikTok = "ลง TikTok แล้ว" ที่เหลือ = "ยังไม่ลง" */
+function isTTLink(a){return a.kind==='LINK'&&a.purpose==='DELIVERABLE'&&parseTT(a.url).ok}
+function hasTT(t){return (t.attachments||[]).some(isTTLink)}
+function normStatus(){tasks.forEach(function(t){t.status=hasTT(t)?'POSTED':'DRAFT'})}
 function demoArt(b){
   var c=b==='KS'?'#E8590C':'#6B4630';
   var svg='<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400"><rect width="600" height="400" fill="'+c+'"/><circle cx="300" cy="170" r="70" fill="rgba(255,255,255,.25)"/><text x="300" y="320" font-size="30" text-anchor="middle" fill="#fff" font-family="sans-serif">Artwork v1</text></svg>';
@@ -716,17 +692,11 @@ function seed(){
   ];
   return rows.map(function(r,i){
     var t={id:uid()+i,title:r[0],brand:r[1],platforms:r[2],publishDate:D(r[3],r[4]),
-      briefDue:B(r[3],3,'17:00'),status:r[5],
+      status:'DRAFT',
       caption:'ตัวอย่างแคปชั่นสำหรับ "'+r[0]+'"\n\n#'+(r[1]==='KS'?'Kudsan':'Bellinees')+' #ContentPlan',
-      revNote:'',attachments:[],reviews:[],history:[{at:Date.now(),from:null,to:r[5]}]};
-    if(r[5]!=='DRAFT')t.attachments.push({id:uid(),kind:'IMAGE',purpose:'DELIVERABLE',name:'artwork-v1.svg',size:2048,url:demoArt(r[1])});
+      attachments:[]};
     var ts=TT_SEED[r[0]];
-    if(ts)t.attachments.push({id:uid(),kind:'LINK',purpose:'DELIVERABLE',name:'คลิปบน TikTok',size:0,url:ttSeedUrl(ts)});
-    if(r[5]==='REVISION'){
-      t.revNote='ปรับโทนภาพให้อบอุ่นขึ้น และเปลี่ยนข้อความ CTA ให้สั้นลง';
-      t.reviews.push({decision:'REJECTED',comment:t.revNote,round:1,by:'ADMIN',at:Date.now()});
-    }
-    if(r[5]==='APPROVED'||r[5]==='POSTED')t.reviews.push({decision:'APPROVED',comment:'',round:1,by:'ADMIN',at:Date.now()});
+    if(ts){t.attachments.push({id:uid(),kind:'LINK',purpose:'DELIVERABLE',name:'คลิปบน TikTok',size:0,url:ttSeedUrl(ts)});t.status='POSTED'}
     return t;
   });
 }
@@ -737,6 +707,7 @@ function load(){
 var toastTimer;
 function toast(msg){var t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(function(){t.hidden=true},2600)}
 function save(){
+  normStatus();
   try{
     var slim=tasks.map(function(t){var c=Object.assign({},t);c.attachments=(t.attachments||[]).filter(function(a){return !a.session});return c});
     localStorage.setItem(KEY,JSON.stringify({tasks:slim}));
@@ -756,19 +727,6 @@ function monthTasks(){
 }
 function visible(){var f=getF();return monthTasks().filter(function(t){return !Object.keys(f.statuses).length||f.statuses[t.status]})}
 
-function dueInfo(t){
-  if(t.status==='POSTED')return null;
-  var td=todayStr();
-  if(t.publishDate.slice(0,10)<td)return {lv:'bad',text:'เลยวันโพสต์'};
-  if(t.briefDue&&(t.status==='DRAFT'||t.status==='REVISION')){
-    var d=dayDiff(t.briefDue.slice(0,10),td);
-    if(d<0)return {lv:'bad',text:'เลยกำหนดส่ง'};
-    if(d===0)return {lv:'warn',text:'ส่งงานวันนี้'};
-    if(d<=2)return {lv:'warn',text:'ส่งใน '+d+' วัน'};
-  }
-  return null;
-}
-
 /* ---------- static UI ---------- */
 function buildFilters(){
   var h='';
@@ -782,7 +740,6 @@ function buildFilters(){
 function buildSummary(){
   var h=STATUSES.map(function(s){
     return '<button class="stat" data-st="'+s.id+'" aria-pressed="false" style="--c:var('+s.c+')"><span class="n num">0</span><span class="l"><span class="dot"></span>'+s.label+'</span></button>'}).join('');
-  h+='<div class="stat alert"><span class="n num" id="alertN">0</span><span class="l">งานต้องตาม</span></div>';
   $('#summary').innerHTML=h;
 }
 function syncFilterUI(){
@@ -799,7 +756,6 @@ function updateSummary(){
     b.querySelector('.n').textContent=mt.filter(function(t){return t.status===s.id}).length;
     b.setAttribute('aria-pressed',f.statuses[s.id]?'true':'false');
   });
-  $('#alertN').textContent=mt.filter(function(t){return dueInfo(t)}).length;
 }
 
 /* ---------- quest / XP ---------- */
@@ -807,19 +763,18 @@ function updateQuest(){}
 
 /* ---------- render views ---------- */
 function chipHTML(t){
-  var s=stat(t.status),di=dueInfo(t);
-  return '<button type="button" class="chip'+(di&&di.lv==='bad'?' late':'')+'" draggable="'+(isMgr()?'true':'false')+'" data-id="'+t.id+'" style="--sc:var('+s.c+')" title="'+esc(t.title)+' · '+s.label+'">'+
+  var s=stat(t.status);
+  return '<button type="button" class="chip" draggable="'+(isMgr()?'true':'false')+'" data-id="'+t.id+'" style="--sc:var('+s.c+')" title="'+esc(t.title)+' · '+s.label+'">'+
     '<span class="sd"></span><span class="t">'+esc(t.title)+'</span>'+'</button>';
 }
 function cardHTML(t){
-  var di=dueInfo(t);
   var img=(t.attachments||[]).filter(function(a){return a.kind==='IMAGE'})[0];
   return '<div class="card" tabindex="0" role="button" draggable="'+(isMgr()?'true':'false')+'" data-id="'+t.id+'">'+
     (img?'<img src="'+esc(img.url)+'" alt="">':'')+
     '<div class="cb"><div class="meta"><b>'+t.brand+'</b><span class="num">'+fmtDay(t.publishDate)+' '+t.publishDate.slice(11,16)+'</span></div>'+
     '<div class="title">'+esc(t.title)+'</div>'+
     '<div class="tags">'+t.platforms.map(function(p){return '<span class="tag-s">'+p+'</span>'}).join('')+
-    (di?'<span class="due '+di.lv+'">'+di.text+'</span>':'')+
+    (t.status==='POSTED'?'<span class="due ok">ลง TikTok แล้ว</span>':'')+
     ((t.attachments||[]).length?'<span class="clip num">ไฟล์ '+t.attachments.length+'</span>':'')+
     '</div></div></div>';
 }
@@ -841,8 +796,8 @@ function renderCalendar(list){
 function renderKanban(list){
   $('#view').innerHTML='<div class="board">'+STATUSES.map(function(s){
     var items=list.filter(function(t){return t.status===s.id}).sort(function(a,b){return a.publishDate<b.publishDate?-1:1});
-    return '<section class="col" data-drop="status:'+s.id+'"><header><span class="pill" style="--pc:var('+s.c+');--pb:var('+s.b+')">'+s.label+'</span><span class="cnt num">'+items.length+'</span></header>'+
-      (items.length?items.map(cardHTML).join(''):'<div class="empty">วางการ์ดที่นี่</div>')+'</section>';
+    return '<section class="col"><header><span class="pill" style="--pc:var('+s.c+');--pb:var('+s.b+')">'+s.label+'</span><span class="cnt num">'+items.length+'</span></header>'+
+      (items.length?items.map(cardHTML).join(''):'<div class="empty">ไม่มีงานในช่องนี้</div>')+'</section>';
   }).join('')+'</div>';
 }
 function render(){
@@ -977,7 +932,7 @@ function renderTT(){
   $('#ttAdmin').hidden=!mgr;$('#ttViewer').hidden=mgr;
   if(!mgr){
     var v=list.slice().sort(function(a,b){return b.at-a.at});
-    $('#ttViewer').innerHTML='<h3 style="margin:0 0 8px;font-size:15px">ลิงก์ TikTok ที่ส่งในงานต่าง ๆ ('+v.length+')</h3>'+
+    $('#ttViewer').innerHTML='<h3 style="margin:0 0 8px;font-size:15px">ลิงก์ TikTok ที่ลงแล้ว ('+v.length+')</h3>'+
       (v.length?'<ul class="tt-list">'+v.map(function(x){
         var t=taskById(x.taskId);
         return '<li><span style="min-width:0"><b style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(t.title)+'</b><a href="'+esc(x.url)+'" target="_blank" rel="noopener noreferrer">'+esc(x.url.replace('https://',''))+'</a></span><span class="tt-chip'+(x.status==='FAILED'?' bad':'')+'">'+(x.status==='OK'?'ส่งแล้ว':x.status==='FAILED'?'ดึงข้อมูลไม่สำเร็จ':'กำลังดึงข้อมูล')+'</span></li>';
@@ -1013,7 +968,7 @@ function renderTT(){
       '<td class="tt-er">'+(er==null?'–':er.toFixed(2)+'%')+'</td><td class="l">'+badge+'</td>'+
       '<td class="l num" style="white-space:nowrap;color:var(--muted);font-size:12px">'+d.getDate()+' '+MSHORT[d.getMonth()]+' '+pad(d.getHours())+':'+pad(d.getMinutes())+'</td>'+
       '<td><div class="tt-act"><button type="button" data-ttr="'+x.id+'"'+(x.status==='FETCHING'?' disabled':'')+'>อัปเดต</button></div></td></tr>';
-  }).join(''):'<tr><td colspan="10" class="tt-empty" style="text-align:center">'+(list.length?'ไม่มีรายการในตัวกรองนี้':'ยังไม่มีคลิป ให้คนส่งงานวางลิงก์ TikTok ในช่องส่งงานของงานนั้น')+'</td></tr>';
+  }).join(''):'<tr><td colspan="10" class="tt-empty" style="text-align:center">'+(list.length?'ไม่มีรายการในตัวกรองนี้':'ยังไม่มีคลิป ให้วางลิงก์ TikTok ในช่องลิงก์ของงานที่ลงแล้ว')+'</td></tr>';
   $('#ttTable').innerHTML=head+'<tbody>'+body+'</tbody>';
 }
 function setSection(s){
@@ -1044,13 +999,13 @@ function applyRole(){
   rb.textContent=mgr?'Admin':'Viewer';
   rb.className='rolebadge'+(mgr?' mgr':'');
   $('#uPerm').textContent=mgr
-    ?'สิทธิ์ Admin: สร้าง แก้ไข ลบ ลากสลับวัน และ Approve/Reject งานได้'
-    :'สิทธิ์ Viewer: อ่านอย่างเดียว ลากเลื่อนไม่ได้ แต่เปิดดูบรีฟ ดาวน์โหลดไฟล์ อัปเดตสถานะ และอัปโหลดไฟล์ส่งงานได้';
+    ?'สิทธิ์ Admin: สร้าง แก้ไข ลบ ลากสลับวัน และดูสถิติ TikTok ได้'
+    :'สิทธิ์ Viewer: อ่านอย่างเดียว ลากเลื่อนไม่ได้ แต่เปิดดูบรีฟ ดาวน์โหลดไฟล์ และวางลิงก์ TikTok เมื่อคอนเทนต์ลงแล้วได้';
   $('#newBtn').hidden=!mgr;
   $('#clearDemo').hidden=!mgr;$('#resetDemo').hidden=!mgr;
   $('#demoText').textContent=mgr
-    ?'ข้อมูลที่เห็นเป็นตัวอย่าง ลากการ์ดเพื่อเลื่อนวันหรือเปลี่ยนสถานะ ข้อมูลเก็บในเบราว์เซอร์เครื่องนี้'
-    :'ข้อมูลที่เห็นเป็นตัวอย่าง ตอนนี้เป็นโหมดอ่านอย่างเดียว เปิดงานเพื่ออ่านบรีฟ อัปโหลดไฟล์ส่งงาน และส่งตรวจได้';
+    ?'ข้อมูลที่เห็นเป็นตัวอย่าง ลากการ์ดเพื่อเลื่อนวัน ข้อมูลเก็บในเบราว์เซอร์เครื่องนี้'
+    :'ข้อมูลที่เห็นเป็นตัวอย่าง ตอนนี้เป็นโหมดอ่านอย่างเดียว เปิดงานเพื่ออ่านบรีฟ และวางลิงก์ TikTok เมื่อลงแล้วได้';
   if(section==='tt')renderTT();
 }
 
@@ -1177,44 +1132,15 @@ document.addEventListener('drop',function(e){
   e.preventDefault();
   if(!isMgr()){toast('ไม่มีสิทธิ์ย้ายงาน');dragId=null;render();return}   // กันซ้ำอีกชั้น แม้ UI จะลากไม่ได้อยู่แล้ว
   var t=tasks.filter(function(x){return x.id===dragId})[0];
-  var parts=z.dataset.drop.split(':'),reopen=null;
+  var parts=z.dataset.drop.split(':');
   if(t){
     if(parts[0]==='day'&&t.publishDate.slice(0,10)!==parts[1]){
       t.publishDate=parts[1]+t.publishDate.slice(10);
       save();toast('เลื่อน "'+t.title+'" ไปวันที่ '+fmtDay(parts[1]));
-    }else if(parts[0]==='status'&&t.status!==parts[1]){
-      var res=doTransition(t,parts[1]);
-      if(!res.ok){toast(res.reason);if(res.needComment)reopen=t.id}
-      else if(parts[1]==='POSTED'){burst(e.clientX,e.clientY);toast('Posted!')}
-      else toast('เปลี่ยนสถานะเป็น '+stat(parts[1]).label);
     }
   }
   dragId=null;render();
-  if(reopen)openModal(reopen);
 });
-function setStatus(t,s){
-  if(t.status===s)return;
-  t.history=t.history||[];
-  t.history.push({at:Date.now(),from:t.status,to:s});
-  t.status=s;
-}
-/* จุดเดียวที่เปลี่ยนสถานะ (เหมือน POST /api/tasks/:id/transition): ตรวจสิทธิ์ + เส้นทาง + บังคับคอมเมนต์ตอนตีกลับ + บังคับไฟล์ส่งงาน */
-function doTransition(t,to,comment){
-  var chk=checkTransition(t,to);
-  if(!chk.ok)return chk;
-  var rv=t.status==='IN_REVIEW'?(to==='APPROVED'?'APPROVED':to==='REVISION'?'REJECTED':null):null;
-  var cm=(comment||'').trim();
-  if(rv==='REJECTED'&&!cm)return {ok:false,needComment:true,reason:'ตีกลับต้องระบุสิ่งที่ต้องแก้'};
-  if(to==='IN_REVIEW'&&!(t.attachments||[]).some(function(a){return a.purpose==='DELIVERABLE'}))
-    return {ok:false,reason:'แนบไฟล์ส่งงานอย่างน้อย 1 ไฟล์ก่อนส่งตรวจ'};
-  setStatus(t,to);
-  t.reviews=t.reviews||[];
-  if(to==='IN_REVIEW')t.submittedAt=Date.now();
-  if(rv){t.reviews.push({decision:rv,comment:cm,round:t.reviews.length+1,at:Date.now()});if(rv==='REJECTED')t.revNote=cm}
-  save();
-  return {ok:true,review:rv};
-}
-
 /* ---------- events ---------- */
 function shiftMonth(n){var d=new Date(cur.y,cur.m+n,1);cur={y:d.getFullYear(),m:d.getMonth()};render()}
 $('#prev').onclick=function(){shiftMonth(-1)};
@@ -1253,11 +1179,10 @@ $('#resetDemo').onclick=function(){if(!isMgr())return;tasks=seed();save();render
 var dlg=$('#dlg'),editing=null,draft=null;
 function fillSelects(){
   $('#fBrand').innerHTML=Object.keys(BRANDS).map(function(k){return '<option value="'+k+'">'+esc(BRANDS[k].name)+' ('+k+')</option>'}).join('');
-  $('#fStatus').innerHTML=STATUSES.map(function(s){return '<option value="'+s.id+'">'+s.label+'</option>'}).join('');
   $('#fPlats').innerHTML=PLATS.map(function(p){return '<label><input type="checkbox" value="'+p.id+'"><span>'+p.label+'</span></label>'}).join('');
 }
 function setFormEnabled(on){
-  ['fTitle','fStatus','fPub','fDue','fCaption','fRev'].forEach(function(k){$('#'+k).disabled=!on});
+  ['fTitle','fPub','fCaption'].forEach(function(k){$('#'+k).disabled=!on});
   $$('#fPlats input').forEach(function(i){i.disabled=!on});
 }
 function openModal(id,date){
@@ -1269,37 +1194,26 @@ function openModal(id,date){
   $('#dlgTitle').textContent=mgr?(t?'แก้ไขคอนเทนต์':'สร้างคอนเทนต์ใหม่'):'รายละเอียดบรีฟ';
   $('#fTitle').value=t?t.title:'';
   $('#fBrand').value=curBrand;
-  $('#fStatus').value=t?t.status:'DRAFT';
+  $('#fState').textContent=t&&t.status==='POSTED'?'ลง TikTok แล้ว ✓':'ยังไม่ลง TikTok';
   $$('#fPlats input').forEach(function(i){i.checked=!!t&&t.platforms.indexOf(i.value)>-1});
   $('#fPub').value=t?t.publishDate:base;
-  $('#fDue').value=t?(t.briefDue||''):'';
   $('#fCaption').value=t?(t.caption||''):'';
-  $('#fRev').value=t?(t.revNote||''):'';
   draft=(t?t.attachments:[]).slice();
   ['eTitle','ePlats','ePub','eFile'].forEach(function(k){$('#'+k).textContent=''});
   setFormEnabled(mgr);
   $('#saveBtn').hidden=!mgr;
   $('#cancelBtn').textContent=mgr?'ยกเลิก':'ปิด';
   $('#delBtn').hidden=!(mgr&&t);$('#delBtn').textContent='ลบ';$('#delBtn').classList.remove('armed');
-  renderFiles();renderFlow();syncRev();syncCount();renderHist();
+  renderFiles();syncCount();
   if(!dlg.open)dlg.showModal();
   if(mgr)$('#fTitle').focus();
 }
 function closeModal(){if(dlg.open)dlg.close()}
-function syncRev(){$('#revBox').hidden=!isMgr()||$('#fStatus').value!=='REVISION'}
 function syncCount(){$('#cCount').textContent=$('#fCaption').value.length.toLocaleString('th-TH')+' ตัวอักษร'}
-function renderHist(){
-  var h=(editing&&editing.history)||[];
-  $('#histBox').hidden=!h.length;
-  $('#hist').innerHTML=h.slice().reverse().slice(0,6).map(function(x){
-    var d=new Date(x.at);
-    return '<li class="num">'+d.getDate()+' '+MSHORT[d.getMonth()]+' '+pad(d.getHours())+':'+pad(d.getMinutes())+' · '+(x.from?stat(x.from).label+' → ':'สร้างเป็น ')+stat(x.to).label+'</li>';
-  }).join('');
-}
-/* Viewer ลบได้เฉพาะไฟล์ส่งงานที่ตัวเองอัปโหลด ขณะงานยังอยู่ Draft/ให้แก้ */
+/* Admin ลบได้ทุกไฟล์  ฝั่งดูตารางลบได้เฉพาะลิงก์ TikTok */
 function canRemoveFile(a){
   if(isMgr())return true;
-  return a.purpose==='DELIVERABLE'&&!!editing&&can('upload_deliverable')&&(editing.status==='DRAFT'||editing.status==='REVISION');
+  return can('link')&&isTTLink(a);
 }
 function linkHost(u){try{return new URL(u).hostname.replace(/^www\./,'')}catch(e){return u}}
 function fileLi(a,i){
@@ -1318,21 +1232,25 @@ function fileLi(a,i){
 }
 function renderFiles(){
   var ref='',del='';
-  draft.forEach(function(a,i){if(a.purpose==='DELIVERABLE')del+=fileLi(a,i);else ref+=fileLi(a,i)});
+  draft.forEach(function(a,i){if(a.purpose==='DELIVERABLE'){if(a.kind==='LINK')del+=fileLi(a,i)}else ref+=fileLi(a,i)});
   $('#files').innerHTML=ref||'<li class="empty">ยังไม่มีไฟล์บรีฟ</li>';
-  $('#files2').innerHTML=del||'<li class="empty">ยังไม่มีไฟล์ส่งงาน</li>';
+  $('#files2').innerHTML=del||'<li class="empty">ยังไม่มีลิงก์ TikTok</li>';
   $('#drop').hidden=!isMgr();
-  $('#drop2').hidden=!canUploadDel();
-  $('#linkRow').hidden=!canUploadDel();
+  $('#linkRow').hidden=!(can('link')&&editing);   // ต้องมีงานอยู่แล้วจึงแปะลิงก์ได้
 }
-/* Viewer ไม่มีปุ่มบันทึก ไฟล์ส่งงานจึงบันทึกทันที (เหมือนเรียก API อัปโหลดตรง) */
+/* ลิงก์ TikTok บันทึกทันทีทั้ง 2 ฝั่ง (ไม่รอปุ่มบันทึกบรีฟ) แตะเฉพาะลิงก์ ไม่แตะไฟล์บรีฟที่ Admin กำลังแก้ */
 function persistLive(){
-  if(!isMgr()&&editing){editing.attachments=draft.slice();save();render()}
+  if(!editing||!can('link'))return;
+  var keepOther=(editing.attachments||[]).filter(function(a){return !isTTLink(a)});
+  editing.attachments=keepOther.concat(draft.filter(isTTLink));
+  save();render();
+  $('#fState').textContent=editing.status==='POSTED'?'ลง TikTok แล้ว ✓':'ยังไม่ลง TikTok';
 }
 function onRemoveClick(e){
   var b=e.target.closest('[data-rm]');if(!b)return;
   var a=draft[+b.dataset.rm];if(!a||!canRemoveFile(a))return;
-  draft.splice(+b.dataset.rm,1);renderFiles();persistLive();
+  draft.splice(+b.dataset.rm,1);renderFiles();
+  if(isTTLink(a))persistLive();
 }
 /* ---------- เปิดดู / ดาวน์โหลดไฟล์ ---------- */
 function urlToBlob(u){
@@ -1384,20 +1302,21 @@ function viewFile(a){
   }).catch(function(){msg('ไฟล์นี้หมดอายุแล้ว กรุณาอัปโหลดใหม่')});
 }
 function addLink(){
-  if(!canUploadDel())return;
+  if(!can('link')||!editing)return;
   var raw=$('#fLink').value.trim(),u;
   $('#eFile').textContent='';
   if(!raw)return;
   if(!/^[a-z][a-z0-9+.-]*:/i.test(raw))raw='https://'+raw;
   try{u=new URL(raw)}catch(e){$('#eFile').textContent='ลิงก์ไม่ถูกต้อง ต้องขึ้นต้นด้วย https://';return}
   if(u.protocol!=='https:'&&u.protocol!=='http:'){$('#eFile').textContent='รองรับเฉพาะลิงก์ที่ขึ้นต้นด้วย https://';return}
-  var host=linkHost(u.href),tt=/(^|\.)tiktok\.com$/.test(host),href=u.href;
-  if(tt){var pt=parseTT(u.href);if(!pt.ok){$('#eFile').textContent=pt.reason;return}href=pt.url}
+  var pt=parseTT(u.href);
+  if(!pt.ok){$('#eFile').textContent=pt.reason;return}
+  var href=pt.url,tt=true;
   if(draft.some(function(a){return a.kind==='LINK'&&a.url===href})){$('#eFile').textContent='มีลิงก์นี้แล้ว';return}
-  draft.push({id:uid(),kind:'LINK',purpose:'DELIVERABLE',name:tt?'คลิปบน TikTok':'ลิงก์งานส่ง',size:0,url:href});
+  draft.push({id:uid(),kind:'LINK',purpose:'DELIVERABLE',name:'คลิปบน TikTok',size:0,url:href});
   $('#fLink').value='';
   renderFiles();persistLive();
-  if(tt)toast('เพิ่มลิงก์ TikTok แล้ว ระบบจะดึงสถิติให้อัตโนมัติ');
+  toast('บันทึกลิงก์แล้ว งานนี้ขึ้นว่าลง TikTok แล้ว ระบบจะดึงสถิติให้อัตโนมัติ');
 }
 function onFileAct(e){
   var c=e.target.closest('[data-copy]');
@@ -1422,45 +1341,6 @@ $('#viewDlg').addEventListener('close',function(){$('#vBody').textContent='';vie
 $('#files').addEventListener('click',onRemoveClick);
 $('#files2').addEventListener('click',onRemoveClick);
 
-/* แผงการทำงานตามสิทธิ์: Viewer ส่งงาน / Manager ตรวจงาน */
-function renderFlow(){
-  var box=$('#flow'),t=editing;
-  if(!t){box.hidden=true;box.innerHTML='';return}
-  var mgr=isMgr(),own=!mgr&&myRole()==='VIEWER',h='';
-  var rej=(t.reviews||[]).filter(function(r){return r.decision==='REJECTED'}).slice(-1)[0];
-  if(t.status==='REVISION'&&rej)h+='<div class="rejbox"><b>ผู้ตรวจให้แก้ (รอบที่ '+rej.round+')</b><p>'+esc(rej.comment)+'</p></div>';
-  if(own){
-    h+='<div class="panel"><h3>ส่งงานของคุณ</h3>';
-    if(t.status==='DRAFT'||t.status==='REVISION'){
-      h+='<p class="note">อัปโหลดไฟล์ส่งงานด้านล่าง แล้วกดส่งตรวจ</p><div class="row"><button type="button" class="btn primary" data-flow="IN_REVIEW">ส่งงานตรวจ</button></div>';
-    }else if(t.status==='IN_REVIEW'){
-      h+='<p class="note">ส่งตรวจแล้ว กำลังรอผู้ตรวจ ถอนกลับมาแก้ได้จนกว่าผู้ตรวจจะตัดสิน</p><div class="row"><button type="button" class="btn" data-flow="DRAFT">ถอนงานกลับมาแก้</button></div>';
-    }else{
-      h+='<p class="note">งานนี้'+(t.status==='APPROVED'?'อนุมัติแล้ว':'โพสต์แล้ว')+' ไม่ต้องดำเนินการเพิ่ม</p>';
-    }
-    h+='</div>';
-  }
-  if(mgr&&t.status==='IN_REVIEW'){
-    h+='<div class="panel"><h3>ตรวจงานที่ส่งมา</h3><label class="fld"><span>คอมเมนต์ (บังคับเมื่อตีกลับ)</span><textarea id="rvComment" rows="3" placeholder="เช่น ปรับโทนสีให้อบอุ่นขึ้น และเปลี่ยนข้อความ CTA"></textarea></label>'+
-      '<div class="row"><button type="button" class="btn ok" data-flow="APPROVED">Approve</button><button type="button" class="btn no" data-flow="REVISION">Reject / ให้แก้</button></div></div>';
-  }
-  if(mgr&&t.status==='APPROVED')h+='<div class="row"><button type="button" class="btn primary" data-flow="POSTED">ทำเครื่องหมายว่าโพสต์แล้ว</button></div>';
-  if(h)h+='<span class="err" id="eFlow"></span>';
-  box.innerHTML=h;box.hidden=!h;
-}
-$('#flow').addEventListener('click',function(e){
-  var b=e.target.closest('[data-flow]');if(!b||!editing)return;
-  var to=b.dataset.flow,c=$('#rvComment');
-  var res=doTransition(editing,to,c?c.value:'');
-  if(!res.ok){$('#eFlow').textContent=res.reason;return}
-  closeModal();render();
-  if(to==='POSTED'){toast('Posted!')}
-  else if(to==='APPROVED')toast('Approve แล้ว');
-  else if(to==='REVISION')toast('ตีกลับให้แก้แล้ว');
-  else if(to==='IN_REVIEW')toast('ส่งงานตรวจแล้ว');
-  else toast('ถอนงานกลับมาแก้แล้ว');
-});
-$('#fStatus').onchange=syncRev;
 $('#fCaption').oninput=syncCount;
 $('#dlgClose').onclick=closeModal;
 $('#cancelBtn').onclick=closeModal;
@@ -1505,7 +1385,7 @@ async function addFiles(list,purpose){
   renderFiles();persistLive();
 }
 function wireDrop(drop,fileIn,purpose){
-  function allowed(){return purpose==='REFERENCE'?isMgr():canUploadDel()}
+  function allowed(){return isMgr()}
   drop.onclick=function(){if(allowed())fileIn.click()};
   drop.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();if(allowed())fileIn.click()}};
   fileIn.onchange=function(){if(allowed())addFiles(fileIn.files,purpose);fileIn.value=''};
@@ -1514,7 +1394,6 @@ function wireDrop(drop,fileIn,purpose){
   drop.addEventListener('drop',function(e){e.preventDefault();e.stopPropagation();drop.classList.remove('over');if(allowed())addFiles(e.dataTransfer.files,purpose)});
 }
 wireDrop($('#drop'),$('#fFile'),'REFERENCE');
-wireDrop($('#drop2'),$('#fFile2'),'DELIVERABLE');
 
 $('#form').addEventListener('submit',function(e){
   e.preventDefault();
@@ -1525,26 +1404,17 @@ $('#form').addEventListener('submit',function(e){
   $('#ePlats').textContent=plats.length?'':'เลือกอย่างน้อย 1 แพลตฟอร์ม';if(!plats.length)ok=false;
   $('#ePub').textContent=pub?'':'เลือกวัน-เวลาที่จะโพสต์';if(!pub)ok=false;
   if(!ok)return;
-  var status=$('#fStatus').value;
-  var wasPosted=!!editing&&editing.status==='POSTED';
-  var data={title:title,brand:curBrand,platforms:plats,publishDate:pub,briefDue:$('#fDue').value,
-    caption:$('#fCaption').value,revNote:$('#fRev').value||'',attachments:draft.slice()};
+  var data={title:title,brand:curBrand,platforms:plats,publishDate:pub,caption:$('#fCaption').value,attachments:draft.slice()};
   var wasEdit=!!editing;
   if(editing){
-    if(status!==editing.status){
-      var prevAtt=editing.attachments;editing.attachments=draft.slice();
-      var res=doTransition(editing,status,$('#fRev').value);
-      if(!res.ok){editing.attachments=prevAtt;$('#eFile').textContent=res.reason;toast(res.reason);return}
-    }
     Object.assign(editing,data);
   }else{
-    tasks.push(Object.assign({id:uid(),status:status,reviews:[],history:[{at:Date.now(),from:null,to:status}]},data));
+    tasks.push(Object.assign({id:uid(),status:'DRAFT'},data));
   }
   var d=pub.slice(0,7);
   if(d!==cur.y+'-'+pad(cur.m+1)){cur={y:+d.slice(0,4),m:+d.slice(5,7)-1}}
   save();closeModal();render();
-  if(status==='POSTED'&&!wasPosted){toast('Posted!')}
-  else toast(wasEdit?'บันทึกการแก้ไขแล้ว':'สร้างคอนเทนต์แล้ว');
+  toast(wasEdit?'บันทึกการแก้ไขแล้ว':'สร้างคอนเทนต์แล้ว');
 });
 $('#delBtn').onclick=function(){
   if(!isMgr())return;
@@ -1555,7 +1425,7 @@ $('#delBtn').onclick=function(){
 };
 
 /* ---------- init ---------- */
-fillSelects();buildFilters();buildSummary();load();ttSync();
+fillSelects();buildFilters();buildSummary();load();normStatus();ttSync();
 tts.forEach(function(t){if(t.status==='PENDING'||t.status==='FETCHING')ttFetch(t,false)});   /* ค้างตอนปิดหน้า ให้ดึงต่อ */
 applyBrand(brandFromHash()||storedBrand()||'KS');
 initLanding();
