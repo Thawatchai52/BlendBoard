@@ -1,10 +1,12 @@
 // lib/providers/apify-trends.ts — ดึงคลิปตามแฮชแท็กผ่าน Apify Actor (run-sync-get-dataset-items)
 //
-// ⚠️ ชื่อ input/output ต่างกันตาม Actor — ค่าเริ่มต้นเขียนตามรูปแบบที่ Actor ค้นหา TikTok ส่วนใหญ่ใช้
-//    (input: hashtags[], resultsPerPage / output: webVideoUrl, videoMeta.coverUrl, playCount ...)
-//    ยังไม่ได้ทดสอบกับ Actor จริง ต้องตรวจ schema ของ Actor ที่เลือกแล้วปรับผ่าน env ก่อนใช้
-//      APIFY_TOKEN, APIFY_TREND_ACTOR (user~actor-name), APIFY_TREND_FIELD (ชื่อช่องรับแฮชแท็ก, ค่าเริ่มต้น hashtags),
-//      APIFY_TREND_LIMIT (จำนวนคลิปต่อแฮชแท็ก, ค่าเริ่มต้น 20)
+// Actor ที่ออกแบบไว้: clockworks/tiktok-scraper (ใส่เป็น  clockworks~tiktok-scraper)
+//   input  : hashtags[] (มีหรือไม่มี # ก็ได้), resultsPerPage      — ตรงกับเอกสาร input schema บนหน้า Apify
+//   output : webVideoUrl, videoMeta.coverUrl, playCount, diggCount, shareCount, collectCount, commentCount,
+//            createTimeISO, authorMeta.name, text                  — ตรงกับตัวอย่างผลลัพธ์ในเอกสาร
+// ⚠️ ตรวจจากเอกสารสาธารณะเท่านั้น ยังไม่ได้รันกับบัญชี Apify จริง ลองดึง 1 คีย์เวิร์ดก่อนแล้วเช็กว่าการ์ดขึ้นครบ
+// (ตัวกรองวันที่ของ Actor คิดเงินเพิ่ม จึงไม่ใช้ แต่กรอง 7 วันเองฝั่งเรา)
+//   env: APIFY_TOKEN, APIFY_TREND_ACTOR, APIFY_TREND_FIELD (ค่าเริ่มต้น hashtags), APIFY_TREND_LIMIT (ต่อแฮชแท็ก, ค่าเริ่มต้น 20)
 import { ProviderError } from './types';
 import { mapItem } from './apify';
 
