@@ -404,6 +404,41 @@ input:disabled,select:disabled,textarea:disabled{opacity:.8;cursor:default}
 .tt-act{display:flex;gap:6px;justify-content:flex-end}
 .tt-act button{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:calc(var(--r) - 4px);padding:3px 9px;font-size:12px}
 .tt-act button:disabled{opacity:.5}
+#tr{display:flex;flex-direction:column;gap:16px}
+.tr-head h2{margin:0;font-family:var(--f-head);font-size:22px}
+.tr-head p{margin:4px 0 0;font-size:13px;color:var(--muted)}
+.tr-box{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:10px}
+.tr-box h3{margin:0;font-size:14px;font-family:var(--f-head)}
+.tr-kw{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.tr-kw .k{display:inline-flex;align-items:center;gap:4px;background:var(--surface-2);border-radius:99px;padding:3px 4px 3px 11px;font-size:13px}
+.tr-kw .k button{border:0;background:transparent;color:var(--muted);width:20px;height:20px;border-radius:50%;line-height:1;cursor:pointer}
+.tr-kw .k button:hover{color:#C92A2A}
+.tr-kw input{border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:99px;padding:5px 12px;font-size:13px;min-width:0;width:180px;max-width:100%}
+.tr-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.tr-bar .sp{flex:1}
+.tr-meta{font-size:12px;color:var(--muted)}
+.tr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.tr-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.tr-cover{position:relative;aspect-ratio:4/5;background:var(--surface-2)}
+.tr-cover img{width:100%;height:100%;object-fit:cover;display:block}
+.tr-cat{position:absolute;left:8px;top:8px;background:rgba(0,0,0,.6);color:#fff;border-radius:99px;padding:2px 10px;font-size:12px}
+.tr-rank{position:absolute;right:8px;top:8px;background:var(--accent);color:var(--on-accent);border-radius:99px;padding:2px 9px;font-size:12px;font-weight:700}
+.tr-body{padding:10px 12px;display:flex;flex-direction:column;gap:6px;flex:1}
+.tr-views{font-family:var(--f-head);font-size:20px;font-weight:600;font-variant-numeric:tabular-nums}
+.tr-views small{font-size:12px;font-weight:400;color:var(--muted);margin-left:4px}
+.tr-cap{margin:0;font-size:13px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.tr-sub{font-size:12px;color:var(--muted)}
+.tr-act{display:flex;gap:6px;margin-top:auto;padding-top:4px}
+.tr-act a,.tr-act button{flex:1;text-align:center;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:calc(var(--r) - 2px);padding:6px 8px;font-size:13px;text-decoration:none;cursor:pointer}
+.tr-act button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:600}
+.tr-lib{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;list-style:none}
+.tr-lib li{display:flex;gap:10px;align-items:center;border:1px solid var(--line);border-radius:var(--r);padding:6px 8px;background:var(--bg)}
+.tr-lib img{width:42px;height:52px;object-fit:cover;border-radius:6px;flex:none}
+.tr-lib .t{min-width:0;flex:1}
+.tr-lib .t b{display:block;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tr-lib .t small{color:var(--muted)}
+.tr-lib button{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:calc(var(--r) - 4px);padding:4px 9px;font-size:12px;cursor:pointer}
+.tr-empty{padding:30px 10px;text-align:center;color:var(--muted);font-size:14px}
 .tt-act button.armed{background:#C92A2A;border-color:#C92A2A;color:#fff}
 .tt-empty{padding:28px 12px;text-align:center;color:var(--muted)}
 .tt-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
@@ -467,6 +502,7 @@ input:disabled,select:disabled,textarea:disabled{opacity:.8;cursor:default}
     <div class="seg" id="topNav" role="group" aria-label="หน้า">
       <button type="button" id="navCal" aria-pressed="true">ปฏิทิน</button>
       <button type="button" id="navTT" aria-pressed="false">สถิติ TikTok</button>
+      <button type="button" id="navTR" aria-pressed="false" hidden>Trend Radar</button>
     </div>
     <button type="button" class="btn" id="logoutBtn">ออกจากระบบ</button>
   </div>
@@ -522,6 +558,36 @@ input:disabled,select:disabled,textarea:disabled{opacity:.8;cursor:default}
     <aside class="filters" id="filters" aria-label="ตัวกรอง"></aside>
     <main id="view"></main>
   </div>
+
+  <section id="tr" hidden aria-labelledby="trH">
+  <div class="tr-head">
+    <h2 id="trH">Trend Radar</h2>
+    <p>คลิปเบเกอรี่และเครื่องดื่มที่กำลังมาแรงบน TikTok ในรอบ 7 วันล่าสุด เอาไว้ต่อยอดคิดคอนเทนต์</p>
+  </div>
+  <p class="tt-sim" id="trSim">ต้นแบบนี้คลิป/ยอดวิว/ภาพปก <b>จำลองขึ้นจากคีย์เวิร์ด</b> ไม่ได้ดึงจาก TikTok จริง และลิงก์ต้นทางเป็นลิงก์ตัวอย่าง · ของจริงดึงผ่าน API ฝั่งเซิร์ฟเวอร์ (มีโค้ดอยู่ในโปรเจกต์ Next.js)</p>
+  <div class="tr-box">
+    <h3>คีย์เวิร์ด / แฮชแท็กที่ใช้ค้นหา</h3>
+    <div class="tr-kw" id="trKw"></div>
+    <div class="tr-bar">
+      <button type="button" class="btn primary" id="trFetch">ดึงเทรนด์ล่าสุด</button>
+      <button type="button" class="btn" id="trKwReset">คืนค่าเริ่มต้น</button>
+      <span class="tr-meta" id="trMeta"></span>
+    </div>
+    <span class="tt-msg" id="trMsg" role="status"></span>
+  </div>
+  <div class="tr-bar">
+    <div class="seg" id="trCats" role="group" aria-label="หมวดหมู่"></div>
+    <div class="seg" id="trSort" role="group" aria-label="เรียงตาม">
+      <button type="button" data-ts="views" aria-pressed="true">ยอดวิว</button>
+      <button type="button" data-ts="er" aria-pressed="false">ความแมส (ER)</button>
+    </div>
+  </div>
+  <div class="tr-grid" id="trGrid"></div>
+  <div class="tr-box">
+    <h3 id="trLibH">คลังไอเดีย (เรฟที่เซฟไว้)</h3>
+    <ul class="tr-lib" id="trLib"></ul>
+  </div>
+</section>
 
   <section id="tt" hidden aria-labelledby="ttH">
     <div class="tt-head">
@@ -973,14 +1039,18 @@ function renderTT(){
 }
 function setSection(s){
   section=s;
-  ['.toolbar','.demo','.summary','.main'].forEach(function(q){var el=$('#app > '+q);if(el)el.hidden=(s==='tt')});
-  $('#tt').hidden=(s!=='tt');
+  if(s==='tr'&&!isMgr())s='cal';   // Trend Radar เฉพาะ Admin
+  section=s;
+  ['.toolbar','.demo','.summary','.main'].forEach(function(q){var el=$('#app > '+q);if(el)el.hidden=(s!=='cal')});
+  $('#tt').hidden=(s!=='tt');$('#tr').hidden=(s!=='tr');
   $('#navCal').setAttribute('aria-pressed',s==='cal');
   $('#navTT').setAttribute('aria-pressed',s==='tt');
-  if(s==='tt')renderTT();else render();
+  $('#navTR').setAttribute('aria-pressed',s==='tr');
+  if(s==='tt')renderTT();else if(s==='tr')renderTR();else render();
 }
 $('#navCal').addEventListener('click',function(){setSection('cal')});
 $('#navTT').addEventListener('click',function(){setSection('tt')});
+$('#navTR').addEventListener('click',function(){setSection('tr')});
 $('#tt').addEventListener('click',function(e){
   var f=e.target.closest('[data-ttf]');if(f){ttFilter=f.dataset.ttf;renderTT();return}
   var so=e.target.closest('[data-tts]');if(so){var k=so.dataset.tts;ttSort=ttSort.k===k?{k:k,d:-ttSort.d}:{k:k,d:-1};renderTT();return}
@@ -990,6 +1060,170 @@ $('#tt').addEventListener('click',function(e){
   if(o){openModal(o.dataset.tto)}
 });
 ttLoad();
+
+/* ---------- Trend Radar (Admin): เทรนด์เบเกอรี่/เครื่องดื่ม 7 วันล่าสุด (ข้อมูลจำลอง) ---------- */
+var TRKEY='content-calendar-trend-v1';
+var TR_DEFAULT_KW=['เบเกอรี่','ขนมปัง','คาเฟ่','เครื่องดื่ม','อร่อยบอกต่อ'];
+var TR_WINDOW_DAYS=7;
+/* จัดหมวดจากแคปชัน+แฮชแท็ก (ของจริงใช้ตรรกะเดียวกันฝั่งเซิร์ฟเวอร์ ปรับคำได้) */
+var TR_WORDS={
+  bakery:['เบเกอรี่','ขนมปัง','ครัวซองต์','เค้ก','โดนัท','คุกกี้','ทาร์ต','เบเกิล','สโคน','มัฟฟิน','บราวนี่','ขนมอบ','อบใหม่'],
+  drink:['เครื่องดื่ม','ชานม','กาแฟ','ลาเต้','มัทฉะ','โกโก้','น้ำผึ้งมะนาว','สมูทตี้','โซดา','ชาเย็น','เอสเปรสโซ','ชาส้ม','น้ำปั่น']
+};
+var TR_CATS=[{id:'ALL',label:'ทั้งหมด'},{id:'bakery',label:'🥐 เบเกอรี่'},{id:'drink',label:'🧋 เครื่องดื่ม'}];
+function trClassify(text){
+  var t=String(text||''),sc={bakery:0,drink:0};
+  Object.keys(TR_WORDS).forEach(function(k){TR_WORDS[k].forEach(function(w){if(t.indexOf(w)>-1)sc[k]++})});
+  if(!sc.bakery&&!sc.drink)return null;
+  return sc.bakery>=sc.drink?'bakery':'drink';
+}
+/* คลิปจำลอง [อีโมจิ, แคปชัน, แฮชแท็กประกอบ, สีพื้นภาพปก] */
+var TR_SIM=[
+ ['🥐','ครัวซองต์ชาไทยกรอบนอกนุ่มใน ฟินจนต้องซื้อซ้ำ','#เบเกอรี่ #ครัวซองต์','#F59F00'],
+ ['🍞','ขนมปังเนยสดนุ่มฟู ทำเองได้ที่บ้านใน 3 ขั้นตอน','#ขนมปัง #เบเกอรี่','#D9480F'],
+ ['🍰','เค้กกล้วยหอมอบใหม่ ๆ หอมทั้งร้าน คาเฟ่นี้ต้องมา','#คาเฟ่ #เค้ก','#E8590C'],
+ ['🍩','โดนัทไส้ไหลสามสี กัดแล้วเยิ้มมาก','#อร่อยบอกต่อ #โดนัท','#C2255C'],
+ ['🍪','คุกกี้ช็อกโกแลตชิพ ขอบกรอบกลางหนึบ สูตรลับร้านดัง','#เบเกอรี่ #คุกกี้','#8B5E3C'],
+ ['🥧','ทาร์ตไข่เตาถ่าน ร้อน ๆ ออกใหม่ทุกชั่วโมง','#ขนมปัง #ทาร์ต','#F08C00'],
+ ['🥯','เบเกิลครีมชีสสตรอว์เบอร์รี่ มื้อเช้าสายคาเฟ่','#คาเฟ่ #เบเกิล','#AE3EC9'],
+ ['🧁','มัฟฟินบลูเบอร์รี่ ท็อปครัมเบิลกรอบ ๆ','#เบเกอรี่ #มัฟฟิน','#4263EB'],
+ ['🧋','ชานมไข่มุกบราวน์ชูการ์ ร้านนี้คนต่อคิวยาว','#เครื่องดื่ม #ชานม','#7B4B2A'],
+ ['☕','กาแฟมะพร้าวน้ำหอมเย็น ๆ หวานน้อยแต่หอมมาก','#คาเฟ่ #กาแฟ','#5C3D2E'],
+ ['🍵','มัทฉะลาเต้ฟองนมหนานุ่ม เมนูใหม่ที่ต้องลอง','#เครื่องดื่ม #มัทฉะ','#2F9E44'],
+ ['🍋','น้ำผึ้งมะนาวโซดา ซ่าสดชื่นรับหน้าร้อน','#อร่อยบอกต่อ #โซดา','#FAB005'],
+ ['🍓','สมูทตี้สตรอว์เบอร์รี่โยเกิร์ต ปั่นเองง่ายมาก','#เครื่องดื่ม #สมูทตี้','#E03131'],
+ ['🥤','โกโก้เข้มข้นท็อปฟองนมเค็ม จิบแล้วติดใจ','#คาเฟ่ #โกโก้','#6D4C41'],
+ ['🍊','ชาส้มโซดาสูตรเด็ด ขายดีที่สุดของร้าน','#เครื่องดื่ม #ชาส้ม','#F76707'],
+ ['🧊','เอสเปรสโซโทนิคสีสวย ดื่มแล้วตาตื่น','#คาเฟ่ #เอสเปรสโซ','#1C7ED6'],
+ ['🧹','เคล็ดลับจัดห้องให้เป็นระเบียบใน 10 นาที','#อร่อยบอกต่อ #จัดห้อง','#868E96'],
+ ['🐶','น้องหมาทำท่าตลกตอนรอขนม','#คาเฟ่ #สัตว์เลี้ยง','#868E96']
+];
+var TR_NAMES=['bake.with.mint','cafe_diary_th','sweetie.baker','drinkpai','toast.and.tea','lalin.eats','oven_mood','boba.daily'];
+function trCover(emoji,color){
+  var svg='<svg xmlns="http://www.w3.org/2000/svg" width="400" height="500"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+color+'"/><stop offset="1" stop-color="#1b1b1b"/></linearGradient></defs><rect width="400" height="500" fill="url(#g)"/><text x="200" y="285" font-size="150" text-anchor="middle">'+emoji+'</text></svg>';
+  return 'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+}
+function trSimFetch(kws){
+  var day=new Date().toISOString().slice(0,10),out={},now=Date.now();
+  kws.forEach(function(kw){
+    var r=rng(hashStr(kw+'|'+day)),n=4+Math.floor(r()*4);
+    for(var i=0;i<n;i++){
+      var tpl=TR_SIM[Math.floor(r()*TR_SIM.length)];
+      var vid=String(7400000000000000000+hashStr(tpl[1]+kw+i)%900000000000000);
+      if(out[vid])continue;
+      var views=Math.round(15000+Math.pow(r(),2.2)*2600000),er=3+r()*13,inter=views*er/100;
+      var likes=Math.round(inter*.78),comments=Math.round(inter*.04),shares=Math.round(inter*.08),saves=Math.max(0,Math.round(inter)-likes-comments-shares);
+      var author=TR_NAMES[Math.floor(r()*TR_NAMES.length)];
+      out[vid]={id:vid,url:'https://www.tiktok.com/@'+author+'/video/'+vid,author:author,
+        caption:tpl[1]+' '+tpl[2]+(tpl[3]==='#868E96'?'':' #'+kw.replace(/^#/,'')),cover:trCover(tpl[0],tpl[3]),
+        views:views,likes:likes,comments:comments,shares:shares,saves:saves,
+        postedAt:now-Math.floor(r()*TR_WINDOW_DAYS*864e5*.98)-3600e3,kw:kw.replace(/^#/,'')};
+    }
+  });
+  return Object.keys(out).map(function(k){return out[k]});
+}
+var tr={kw:TR_DEFAULT_KW.slice(),results:[],fetchedAt:null,saved:[],cat:'ALL',sort:'views',busy:false};
+function trSave(){try{localStorage.setItem(TRKEY,JSON.stringify({kw:tr.kw,results:tr.results,fetchedAt:tr.fetchedAt,saved:tr.saved}))}catch(e){}}
+function trLoad(){
+  try{var d=JSON.parse(localStorage.getItem(TRKEY)||'null');if(d){
+    if(Array.isArray(d.kw)&&d.kw.length)tr.kw=d.kw.filter(function(x){return typeof x==='string'}).slice(0,12);
+    if(Array.isArray(d.results))tr.results=d.results;
+    if(Array.isArray(d.saved))tr.saved=d.saved;
+    tr.fetchedAt=d.fetchedAt||null}}catch(e){}
+}
+function trNorm(raw){
+  var k=String(raw||'').replace(/^[#\s]+/,'').trim().replace(/\s+/g,'');
+  if(!k)return {ok:false,reason:'พิมพ์คีย์เวิร์ดก่อน'};
+  if(k.length>30)return {ok:false,reason:'ยาวเกิน 30 ตัวอักษร'};
+  if(!/^[\w฀-๿.]+$/.test(k))return {ok:false,reason:'ใช้ได้เฉพาะตัวอักษร ตัวเลข และจุด'};
+  return {ok:true,k:k};
+}
+function trVisible(){
+  var cut=Date.now()-TR_WINDOW_DAYS*864e5;
+  var list=tr.results.filter(function(c){return c.postedAt>=cut&&c.cat&&(tr.cat==='ALL'||c.cat===tr.cat)});
+  var key=function(c){return tr.sort==='er'?ttER(c):c.views};
+  return list.sort(function(a,b){return (key(b)||0)-(key(a)||0)});
+}
+function trSavedHas(id){return tr.saved.some(function(x){return x.id===id})}
+function ago(ts){var d=Math.floor((Date.now()-ts)/864e5);return d<=0?'วันนี้':d+' วันก่อน'}
+function renderTR(){
+  if(section!=='tr')return;
+  $('#trKw').innerHTML=tr.kw.map(function(k,i){return '<span class="k">#'+esc(k)+'<button type="button" data-krm="'+i+'" aria-label="ลบ #'+esc(k)+'">&#10005;</button></span>'}).join('')+
+    '<input type="text" id="trKwIn" placeholder="+ เพิ่มคีย์เวิร์ด แล้วกด Enter" maxlength="31" aria-label="เพิ่มคีย์เวิร์ด">';
+  $('#trFetch').disabled=tr.busy||!tr.kw.length;
+  $('#trFetch').textContent=tr.busy?'กำลังดึงเทรนด์...':'ดึงเทรนด์ล่าสุด';
+  var f=tr.fetchedAt?new Date(tr.fetchedAt):null;
+  $('#trMeta').textContent=f?'อัปเดตล่าสุด '+f.getDate()+' '+MSHORT[f.getMonth()]+' '+pad(f.getHours())+':'+pad(f.getMinutes())+' · '+tr.results.filter(function(c){return c.cat}).length+' คลิป':'ยังไม่เคยดึง กด "ดึงเทรนด์ล่าสุด"';
+  $('#trCats').innerHTML=TR_CATS.map(function(c){
+    var n=tr.results.filter(function(x){return x.cat&&(c.id==='ALL'||x.cat===c.id)&&x.postedAt>=Date.now()-TR_WINDOW_DAYS*864e5}).length;
+    return '<button type="button" data-tc="'+c.id+'" aria-pressed="'+(tr.cat===c.id)+'">'+c.label+' ('+n+')</button>'}).join('');
+  $$('#trSort [data-ts]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.ts===tr.sort)});
+  var list=trVisible();
+  $('#trGrid').innerHTML=list.length?list.map(function(c,i){
+    var er=ttER(c),vir=ttViral(c),sv=trSavedHas(c.id);
+    return '<article class="tr-card" data-id="'+esc(c.id)+'"><div class="tr-cover"><img src="'+esc(c.cover)+'" alt="ภาพปกคลิป '+esc(c.caption.slice(0,40))+'" loading="lazy">'+
+      '<span class="tr-cat">'+(c.cat==='bakery'?'🥐 เบเกอรี่':'🧋 เครื่องดื่ม')+'</span>'+(vir?'<span class="tr-rank">🔥 แมส</span>':'')+'</div>'+
+      '<div class="tr-body"><div class="tr-views">'+nf(c.views)+'<small>วิว</small></div>'+
+      '<div class="tr-sub">ER '+(er==null?'–':er.toFixed(2)+'%')+' · @'+esc(c.author)+' · ลง'+ago(c.postedAt)+'</div>'+
+      '<p class="tr-cap">'+esc(c.caption)+'</p>'+
+      '<div class="tr-act"><a href="'+esc(c.url)+'" target="_blank" rel="noopener noreferrer">ดูคลิปต้นทาง ↗</a>'+
+      '<button type="button" data-save="'+esc(c.id)+'" aria-pressed="'+sv+'">'+(sv?'✓ เซฟแล้ว':'เซฟเป็นเรฟ')+'</button></div></div></article>';
+  }).join(''):'<div class="tr-empty" style="grid-column:1/-1">'+(tr.results.length?'ไม่มีคลิปในหมวดนี้':'ยังไม่มีข้อมูล กด "ดึงเทรนด์ล่าสุด" เพื่อเริ่ม')+'</div>';
+  $('#trLibH').textContent='คลังไอเดีย (เรฟที่เซฟไว้) '+tr.saved.length;
+  $('#trLib').innerHTML=tr.saved.length?tr.saved.slice().reverse().map(function(x){
+    return '<li data-id="'+esc(x.id)+'"><img src="'+esc(x.cover)+'" alt=""><div class="t"><b>'+esc(x.caption)+'</b><small>'+nf(x.views)+' วิว · @'+esc(x.author)+'</small></div>'+
+      '<button type="button" data-brief="'+esc(x.id)+'">เขียนบรีฟ</button><button type="button" data-unsave="'+esc(x.id)+'" aria-label="เอาออกจากคลัง">เอาออก</button></li>';
+  }).join(''):'<li class="tr-empty" style="display:block;border:0">ยังไม่มีเรฟ กด "เซฟเป็นเรฟ" ที่การ์ดที่ถูกใจ</li>';
+}
+function trMsg(t,cls){var m=$('#trMsg');m.textContent=t||'';m.className='tt-msg'+(cls?' '+cls:'')}
+function trFetch(){
+  if(!isMgr()||tr.busy||!tr.kw.length)return;
+  tr.busy=true;trMsg('');renderTR();
+  setTimeout(function(){
+    var raw=trSimFetch(tr.kw);
+    tr.results=raw.map(function(c){c.cat=trClassify(c.caption);return c});
+    tr.fetchedAt=Date.now();tr.busy=false;trSave();renderTR();
+    var dropped=tr.results.filter(function(c){return !c.cat}).length;
+    trMsg('ดึงแล้ว '+raw.length+' คลิป'+(dropped?' (ตัดคลิปที่ไม่เกี่ยวกับเบเกอรี่/เครื่องดื่มออก '+dropped+' คลิป)':''),'ok');
+  },1200);
+}
+function trSetSaved(id,on){
+  if(!isMgr())return;
+  var c=tr.results.filter(function(x){return x.id===id})[0]||tr.saved.filter(function(x){return x.id===id})[0];
+  if(on&&c&&!trSavedHas(id)){tr.saved.push({id:c.id,url:c.url,cover:c.cover,caption:c.caption,views:c.views,author:c.author,cat:c.cat,savedAt:Date.now()});toast('เซฟเป็นเรฟแล้ว')}
+  if(!on){tr.saved=tr.saved.filter(function(x){return x.id!==id});toast('เอาออกจากคลังแล้ว')}
+  trSave();renderTR();
+}
+$('#tr').addEventListener('click',function(e){
+  if(!isMgr())return;
+  var t=e.target;
+  var rm=t.closest('[data-krm]');if(rm){tr.kw.splice(+rm.dataset.krm,1);trSave();renderTR();return}
+  var c=t.closest('[data-tc]');if(c){tr.cat=c.dataset.tc;renderTR();return}
+  var so=t.closest('[data-ts]');if(so){tr.sort=so.dataset.ts;renderTR();return}
+  var sv=t.closest('[data-save]');if(sv){trSetSaved(sv.dataset.save,!trSavedHas(sv.dataset.save));return}
+  var us=t.closest('[data-unsave]');if(us){trSetSaved(us.dataset.unsave,false);return}
+  var br=t.closest('[data-brief]');
+  if(br){
+    var x=tr.saved.filter(function(i){return i.id===br.dataset.brief})[0];if(!x)return;
+    openModal(null);
+    $('#fTitle').value='ไอเดียจากเทรนด์: '+x.caption.replace(/#\S+/g,'').trim().slice(0,60);
+    $('#fCaption').value='เรฟ: '+x.url+' ('+nf(x.views)+' วิว)\n\nไอเดียตั้งต้น: '+x.caption+'\n\n(ปรับให้เข้ากับแบรนด์: )';
+    syncCount();return;
+  }
+});
+$('#tr').addEventListener('keydown',function(e){
+  if(e.target.id==='trKwIn'&&e.key==='Enter'){
+    e.preventDefault();
+    var r=trNorm(e.target.value);
+    if(!r.ok){trMsg(r.reason,'err');return}
+    if(tr.kw.indexOf(r.k)>-1){trMsg('มีคีย์เวิร์ดนี้แล้ว','err');return}
+    if(tr.kw.length>=12){trMsg('ใส่ได้สูงสุด 12 คีย์เวิร์ด','err');return}
+    tr.kw.push(r.k);trMsg('');trSave();renderTR();$('#trKwIn').focus();
+  }
+});
+$('#trFetch').onclick=trFetch;
+$('#trKwReset').onclick=function(){if(!isMgr())return;tr.kw=TR_DEFAULT_KW.slice();trMsg('');trSave();renderTR()};
+trLoad();
 
 /* ---------- ปรับ UI ตามสิทธิ์ของประตูที่เลือก ---------- */
 function applyRole(){
@@ -1006,7 +1240,10 @@ function applyRole(){
   $('#demoText').textContent=mgr
     ?'ข้อมูลที่เห็นเป็นตัวอย่าง ลากการ์ดเพื่อเลื่อนวัน ข้อมูลเก็บในเบราว์เซอร์เครื่องนี้'
     :'ข้อมูลที่เห็นเป็นตัวอย่าง ตอนนี้เป็นโหมดอ่านอย่างเดียว เปิดงานเพื่ออ่านบรีฟ และวางลิงก์ TikTok เมื่อลงแล้วได้';
+  $('#navTR').hidden=!mgr;
+  if(section==='tr'&&!mgr)setSection('cal');
   if(section==='tt')renderTT();
+  if(section==='tr')renderTR();
 }
 
 /* ---------- ประตูทางเข้า: เช็ครหัสผ่านก่อนเข้า Dashboard ---------- */

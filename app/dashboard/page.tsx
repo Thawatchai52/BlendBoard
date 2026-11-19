@@ -25,6 +25,13 @@ export default async function DashboardHome() {
           <p className="mt-1 text-sm text-muted">ยอดวิว ER และป้าย 🔥 แมสแตก!</p>
         </Link>
       )}
+
+      {role === 'ADMIN' && (
+        <Link href="/dashboard/trends" className="rounded-brand border border-line bg-surface p-5 hover:bg-surface-2">
+          <p className="font-head text-lg font-semibold">Trend Radar</p>
+          <p className="mt-1 text-sm text-muted">เทรนด์เบเกอรี่/เครื่องดื่ม 7 วันล่าสุด + คลังไอเดีย</p>
+        </Link>
+      )}
     </main>
   );
 }

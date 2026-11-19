@@ -169,3 +169,44 @@ model TikTokSnapshot {
 
   @@index([postId, takenAt])
 }
+
+// ---------------- Trend Radar (Admin) ----------------
+model TrendKeyword {
+  term      String   @id            // ไม่มี #  เช่น "เบเกอรี่"
+  createdAt DateTime @default(now())
+}
+
+/// คลิปที่ดึงมาจากการค้นหาคีย์เวิร์ด เก็บแค่ 7 วันล่าสุด (ลบของเก่าทุกครั้งที่ดึง)
+model TrendClip {
+  videoId   String   @id
+  url       String
+  author    String?
+  caption   String?
+  coverUrl  String?                 // ลิงก์ภาพปกจาก CDN ของ TikTok อาจหมดอายุ หน้าเว็บมีภาพสำรอง
+  category  String                  // 'bakery' | 'drink'  (จัดจากแคปชัน/แฮชแท็ก)
+  keyword   String
+  views     Int
+  likes     Int?
+  comments  Int?
+  shares    Int?
+  saves     Int?
+  postedAt  DateTime
+  fetchedAt DateTime @default(now())
+
+  @@index([category, views])
+  @@index([postedAt])
+}
+
+/// คลังไอเดีย: คลิปที่แอดมินกด "เซฟเป็นเรฟ" เก็บสำเนาไว้ถาวร (ไม่ถูกลบตามรอบ 7 วัน)
+model SavedIdea {
+  id        String   @id @default(cuid())
+  videoId   String   @unique
+  url       String
+  author    String?
+  caption   String?
+  coverUrl  String?
+  category  String
+  views     Int
+  note      String?
+  savedAt   DateTime @default(now())
+}
