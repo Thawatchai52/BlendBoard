@@ -95,6 +95,7 @@ model Attachment {
   url      String?           // เฉพาะ LINK  ไฟล์ใน storage ออก URL ชั่วคราวตอนอ่าน
   uploadedByRole ActorRole   @default(ADMIN)
   uploadedAt DateTime        @default(now())
+  tiktok   TikTokPost?       // ลิงก์ TikTok ที่ส่งเป็นไฟล์ส่งงาน → ระบบดึงสถิติให้ (ลบลิงก์/งาน = สถิติหายตาม)
 
   @@index([taskId])
 }
@@ -122,8 +123,12 @@ enum FetchStatus {
 
 model TikTokPost {
   id            String      @id @default(cuid())
-  url           String      @unique            // normalize แล้ว (ตัด query/hash)
-  videoId       String?     @unique            // ได้จาก URL หรือจากผลของผู้ให้บริการ (ลิงก์สั้น)
+  // 1 ลิงก์ส่งงาน (Attachment) = 1 แถว  ลบ Attachment หรือ Task แล้วแถวนี้ถูกลบตาม
+  attachmentId  String      @unique
+  attachment    Attachment  @relation(fields: [attachmentId], references: [id], onDelete: Cascade)
+  taskId        String
+  url           String                         // normalize แล้ว (ตัด query/hash)
+  videoId       String?                        // ได้จาก URL หรือจากผลของผู้ให้บริการ (ลิงก์สั้น)
   status        FetchStatus @default(PENDING)
   error         String?
   attempts      Int         @default(0)        // ล้มเหลวติดกันกี่ครั้ง (cron เลิกลองเมื่อครบ 5)
@@ -145,6 +150,7 @@ model TikTokPost {
 
   snapshots     TikTokSnapshot[]
 
+  @@index([taskId])
   @@index([status, lastFetchedAt])
   @@index([submittedAt])
 }

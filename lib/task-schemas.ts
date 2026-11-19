@@ -1,6 +1,7 @@
 // lib/task-schemas.ts — ตรวจข้อมูลขาเข้าของ API งาน
 import { z } from 'zod';
 import { MAX_FILE_BYTES, isHttpsUrl, validAttachmentKey } from '@/lib/task-rules';
+import { isTikTokHost, parseTikTokUrl } from '@/lib/tiktok-url';
 
 export const STATUS = z.enum(['DRAFT', 'IN_REVIEW', 'REVISION', 'APPROVED', 'POSTED']);
 const PLATFORM = z.enum(['FACEBOOK', 'INSTAGRAM', 'TIKTOK', 'YOUTUBE', 'LINE_OA', 'X']);
@@ -64,6 +65,11 @@ export function attachmentError(list: AttachmentIn[], brandId: string): string |
   for (const a of list) {
     if (a.kind === 'LINK') {
       if (!a.url || !isHttpsUrl(a.url)) return `ลิงก์ "${a.fileName}" ต้องขึ้นต้นด้วย https://`;
+      // ลิงก์ส่งงานที่เป็นโดเมน TikTok ต้องเป็นลิงก์คลิปจริง (ระบบจะเอาไปดึงสถิติ)
+      if (a.purpose === 'DELIVERABLE' && isTikTokHost(a.url)) {
+        const p = parseTikTokUrl(a.url);
+        if (!p.ok) return p.reason;
+      }
     } else if (!a.key || !validAttachmentKey(a.key, brandId)) {
       return `ไฟล์ "${a.fileName}" ไม่ถูกต้อง`;
     }

@@ -1,5 +1,5 @@
 // lib/tiktok-service.ts — ดึงสถิติของ 1 โพสต์ แล้วบันทึกลง DB (ใช้ร่วมกันทั้ง submit / refresh / cron)
-import { Prisma } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { engagementRate, isErPartial, isViral } from '@/lib/metrics';
 import { ApifyProvider } from '@/lib/providers/apify';
@@ -51,11 +51,8 @@ export async function refreshPost(id: string): Promise<boolean> {
         prisma.tikTokSnapshot.create({ data: { postId: id, takenAt: now, ...counts } }),
       ]);
     } catch (e) {
-      // ลิงก์สั้นไปตรงกับคลิปที่มีอยู่แล้ว (videoId ซ้ำ) → ลบแถวใหม่ทิ้ง เหลือแถวเดิมแถวเดียว
-      if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') {
-        await prisma.tikTokPost.delete({ where: { id } });
-        return true;
-      }
+      // ลิงก์/งานถูกลบระหว่างรอ (แถวถูก cascade ไปแล้ว) → ไม่ต้องทำอะไร
+      if ((e as { code?: string }).code === 'P2025' || (e as { code?: string }).code === 'P2003') return false;
       throw e;
     }
     return true;
@@ -76,10 +73,16 @@ export async function refreshPost(id: string): Promise<boolean> {
 }
 
 /** แปลงแถว DB → JSON สำหรับหน้า Dashboard (ER และป้ายคำนวณตอนอ่าน แก้เกณฑ์แล้วมีผลย้อนหลังทันที) */
-export function toDTO(p: Prisma.TikTokPostGetPayload<object>) {
+export type PostWithTask = Prisma.TikTokPostGetPayload<{ include: { attachment: { select: { task: { select: { id: true; title: true; brandId: true } } } } } }>;
+export const postInclude = { attachment: { select: { task: { select: { id: true, title: true, brandId: true } } } } } as const;
+
+export function toDTO(p: PostWithTask) {
   const counts = { views: p.views, likes: p.likes, comments: p.comments, shares: p.shares, saves: p.saves };
   return {
     id: p.id,
+    taskId: p.attachment.task.id,
+    taskTitle: p.attachment.task.title,
+    brandId: p.attachment.task.brandId,
     url: p.url,
     status: p.status,
     error: p.error,

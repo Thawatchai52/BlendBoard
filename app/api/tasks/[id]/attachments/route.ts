@@ -1,12 +1,16 @@
 // POST   /api/tasks/:id/attachments        { attachments: [...] }  เพิ่มไฟล์/ลิงก์ (หลังอัปโหลดขึ้น storage แล้ว)
 // DELETE /api/tasks/:id/attachments?id=xxx  ลบไฟล์/ลิงก์
 // Viewer: เฉพาะ "ไฟล์ส่งงาน" และเฉพาะตอนงานเป็น Draft / ให้แก้   Admin: ทุกชนิด ทุกสถานะ
+import { after } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { syncTikTokPosts } from '@/lib/tiktok-sync';
 import { fail, json, requireRole } from '@/lib/api';
 import { taskInclude, toTaskDTO } from '@/lib/task-dto';
 import { addAttachments, attachmentError, attachmentRow } from '@/lib/task-schemas';
 import { canChangeAttachment } from '@/lib/task-rules';
 import { deleteObject } from '@/lib/storage';
+
+export const maxDuration = 120; // after() รอผู้ให้บริการสถิติได้สูงสุด 120 วินาที
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -30,6 +34,7 @@ export async function POST(req: Request, ctx: Ctx) {
   if (bad) return fail(400, 'INVALID', bad);
 
   await prisma.attachment.createMany({ data: parsed.data.attachments.map((a) => ({ taskId: id, ...attachmentRow(a, auth.role) })) });
+  after(() => syncTikTokPosts(id));
   const updated = await prisma.contentTask.findUniqueOrThrow({ where: { id }, include: taskInclude });
   return json(toTaskDTO(updated), 201);
 }

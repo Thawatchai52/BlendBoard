@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseTikTokUrl } from '../lib/tiktok-url.ts';
+import { isTikTokHost, parseTikTokUrl } from '../lib/tiktok-url.ts';
 
 test('ลิงก์คลิปปกติ ตัด query/hash และได้ videoId', () => {
   const r = parseTikTokUrl('https://www.tiktok.com/@kudsan/video/7301234567890123456?is_from_webapp=1&sender_device=pc#x');
@@ -36,4 +36,12 @@ test('ไม่ใช่ลิงก์คลิป (โปรไฟล์ / ห
   assert.equal(parseTikTokUrl('https://www.tiktok.com/').ok, false);
   assert.equal(parseTikTokUrl('javascript:alert(1)').ok, false);
   assert.equal(parseTikTokUrl('').ok, false);
+});
+
+test('isTikTokHost แยกลิงก์ TikTok ออกจากลิงก์ส่งงานทั่วไป (โดเมนปลอมไม่ผ่าน)', () => {
+  assert.equal(isTikTokHost('https://www.tiktok.com/@a/video/7301234567890123456'), true);
+  assert.equal(isTikTokHost('https://vm.tiktok.com/ZSabc/'), true);
+  assert.equal(isTikTokHost('https://drive.google.com/file/d/1'), false);
+  assert.equal(isTikTokHost('https://tiktok.com.evil.com/@a/video/7301234567890123456'), false);
+  assert.equal(isTikTokHost('not a url'), false);
 });

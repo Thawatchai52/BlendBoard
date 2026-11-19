@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { TikTokPostDTO } from '@/lib/tiktok-service';
 import { VIRAL_BADGE, VIRAL_MIN_ER_PCT, VIRAL_MIN_VIEWS } from '@/lib/metrics';
-import TikTokSubmitForm from './TikTokSubmitForm';
 
 type Filter = 'ALL' | 'VIRAL' | 'WAIT' | 'FAILED';
 type SortKey = 'submittedAt' | 'views' | 'er';
@@ -137,9 +136,9 @@ export default function TikTokDashboard() {
         <Stat label="ER เฉลี่ยต่อคลิป" value={stats.avgEr == null ? '–' : `${stats.avgEr.toFixed(2)}%`} />
       </div>
 
-      <div className="rounded-brand border border-line bg-surface p-4">
-        <TikTokSubmitForm onSubmitted={load} />
-      </div>
+      <p className="rounded-brand border border-line bg-surface px-4 py-3 text-sm text-muted">
+        <b className="text-fg">ลิงก์มาจากช่องส่งงานของแต่ละงาน</b> คนส่งงานวางลิงก์ TikTok ในไฟล์ส่งงาน ระบบหลังบ้านดึงยอดและคำนวณ ER ให้อัตโนมัติ ลบลิงก์หรือลบงานแล้วสถิติหายตาม
+      </p>
 
       <div className="flex flex-wrap items-center gap-2" role="group" aria-label="กรองรายการ">
         {chips.map(([k, label]) => (
@@ -170,7 +169,7 @@ export default function TikTokDashboard() {
         <table className="w-full min-w-[820px] text-sm">
           <thead className="border-b border-line bg-surface-2 text-xs text-muted">
             <tr>
-              <th scope="col" className="px-3 py-2 text-left font-medium">คลิป</th>
+              <th scope="col" className="px-3 py-2 text-left font-medium">งาน / คลิป</th>
               {th('views', 'วิว')}
               <th scope="col" className="px-3 py-2 text-right font-medium">ไลก์</th>
               <th scope="col" className="px-3 py-2 text-right font-medium">คอมเมนต์</th>
@@ -187,13 +186,17 @@ export default function TikTokDashboard() {
               <tr><td colSpan={10} className="px-3 py-8 text-center text-muted">กำลังโหลด...</td></tr>
             )}
             {posts !== null && rows.length === 0 && (
-              <tr><td colSpan={10} className="px-3 py-8 text-center text-muted">{posts.length === 0 ? 'ยังไม่มีคลิป วางลิงก์ TikTok ในช่องด้านบนได้เลย' : 'ไม่มีรายการในตัวกรองนี้'}</td></tr>
+              <tr><td colSpan={10} className="px-3 py-8 text-center text-muted">{posts.length === 0 ? 'ยังไม่มีคลิป ให้คนส่งงานวางลิงก์ TikTok ในช่องส่งงานของงานนั้น' : 'ไม่มีรายการในตัวกรองนี้'}</td></tr>
             )}
             {rows.map((p) => (
               <tr key={p.id} className="border-b border-line last:border-0 align-top">
                 <td className="max-w-[260px] px-3 py-2.5">
-                  <a href={p.url} target="_blank" rel="noopener noreferrer" className="block truncate font-medium text-accent hover:underline">
-                    {p.authorHandle ? `@${p.authorHandle.replace(/^@/, '')}` : 'เปิดคลิป'}
+                  <span className="block truncate font-medium text-fg" title={p.taskTitle}>
+                    <span className="mr-1 rounded bg-surface-2 px-1 text-[10px] text-muted">{p.brandId}</span>
+                    {p.taskTitle}
+                  </span>
+                  <a href={p.url} target="_blank" rel="noopener noreferrer" className="block truncate text-xs text-accent hover:underline">
+                    {p.authorHandle ? `@${p.authorHandle.replace(/^@/, '')}` : 'เปิดคลิป'} ↗
                   </a>
                   {p.caption && <p className="truncate text-xs text-muted" title={p.caption}>{p.caption}</p>}
                 </td>

@@ -8,6 +8,15 @@ export type ParsedUrl =
   | { ok: true; url: string; videoId: string | null }
   | { ok: false; reason: string };
 
+/** โดเมนเป็นของ TikTok ไหม (ใช้แยกลิงก์ TikTok ออกจากลิงก์ส่งงานทั่วไป) */
+export function isTikTokHost(input: string): boolean {
+  try {
+    return HOST.test(new URL(input).hostname);
+  } catch {
+    return false;
+  }
+}
+
 export function parseTikTokUrl(input: string): ParsedUrl {
   let raw = (input ?? '').trim();
   if (!raw) return { ok: false, reason: 'กรุณาวางลิงก์ TikTok' };

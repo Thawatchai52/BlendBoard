@@ -4,6 +4,10 @@ import { prisma } from '@/lib/prisma';
 import { fail, json, requireRole } from '@/lib/api';
 import { taskInclude, toTaskDTO } from '@/lib/task-dto';
 import { attachmentError, attachmentRow, createTask } from '@/lib/task-schemas';
+import { after } from 'next/server';
+import { syncTikTokPosts } from '@/lib/tiktok-sync';
+
+export const maxDuration = 120; // after() รอผู้ให้บริการสถิติได้สูงสุด 120 วินาที
 
 export const dynamic = 'force-dynamic';
 const DAY = 86_400_000;
@@ -72,5 +76,6 @@ export async function POST(req: Request) {
     },
     include: taskInclude,
   });
+  after(() => syncTikTokPosts(task.id)); // ลิงก์ TikTok ในไฟล์ส่งงาน → ดึงสถิติหลังตอบผู้ใช้
   return json(toTaskDTO(task), 201);
 }

@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { timingSafeEqual } from 'node:crypto';
 import { prisma } from '@/lib/prisma';
 import { MAX_ATTEMPTS, refreshPost } from '@/lib/tiktok-service';
+import { syncTikTokPosts } from '@/lib/tiktok-sync';
 
 export const maxDuration = 300;
 export const dynamic = 'force-dynamic';
@@ -27,6 +28,7 @@ export async function GET(req: Request) {
   if (!authorized(req)) return NextResponse.json({ error: 'UNAUTHORIZED' }, { status: 401 });
 
   const now = Date.now();
+  await syncTikTokPosts(); // ตาข่ายรอง: ลิงก์ที่ยังไม่มีแถวสถิติ (เช่น ขั้นตอน after() ตอนส่งงานพลาด)
   // คืนสถานะงานที่ค้างให้กลับมาลองได้
   await prisma.tikTokPost.updateMany({
     where: { status: 'FETCHING', updatedAt: { lt: new Date(now - STUCK_AFTER_MS) } },

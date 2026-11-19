@@ -7,6 +7,10 @@ import { taskInclude, taskIncludeWithHistory, toTaskDTO } from '@/lib/task-dto';
 import { attachmentError, attachmentRow, patchTask } from '@/lib/task-schemas';
 import { checkTransition } from '@/lib/task-rules';
 import { deleteObject } from '@/lib/storage';
+import { after } from 'next/server';
+import { syncTikTokPosts } from '@/lib/tiktok-sync';
+
+export const maxDuration = 120; // after() รอผู้ให้บริการสถิติได้สูงสุด 120 วินาที
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -94,6 +98,7 @@ export async function PATCH(req: Request, ctx: Ctx) {
       return tx.contentTask.findUniqueOrThrow({ where: { id }, include: taskInclude });
     });
     await Promise.all(removedKeys.map(deleteObject));
+    if (d.attachments) after(() => syncTikTokPosts(id));
     return json(toTaskDTO(updated));
   } catch (e) {
     if (e instanceof Error && e.message === 'CONFLICT') {

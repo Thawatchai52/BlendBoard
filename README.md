@@ -15,7 +15,7 @@
 | `prisma/schema.prisma` | ตารางงาน/แบรนด์ + TikTok (รวมไฟล์เดียวแล้ว) |
 | `docs/` | สถาปัตยกรรม (`ARCHITECTURE.md`) และการออกแบบสิทธิ์ (`RBAC.md`) |
 | `legacy-rbac/` | RBAC รุ่นเก่าแบบมีบัญชีรายคน เก็บไว้อ้างอิง **ไม่ได้ใช้แล้ว** ถูกแทนที่ด้วย 2 ประตู + cookie |
-| `tests/` | เทสต์สูตร ER / ตัวตรวจลิงก์ TikTok |
+| `tests/` | เทสต์สูตร ER / ตัวตรวจลิงก์ TikTok / กติกางาน |
 
 ## รันโปรเจกต์
 
@@ -72,7 +72,11 @@ npm test                    # เทสต์สูตร ER / ตัวตร�
 
 ## TikTok Analytics
 
-ส่งลิงก์ → `POST /api/tiktok/submit` → ดึงสถิติผ่าน Apify Actor → เก็บยอด + snapshot → `cron` อัปเดตทุก 6 ชม. นาน 30 วัน
+**ไม่มีฟอร์มส่งลิงก์แยก** — ยอดมาจากลิงก์ TikTok ที่คนส่งงานวางในช่อง "ไฟล์ส่งงาน" ของแต่ละงานในปฏิทินเลย
+แนบลิงก์ → `after()` สร้างแถวสถิติ (`lib/tiktok-sync.ts`) → ดึงยอดผ่าน Apify Actor → เก็บยอด + snapshot → `cron` อัปเดตทุก 6 ชม. นาน 30 วัน
+ลบลิงก์หรือลบงาน → สถิติของคลิปนั้นหายตาม (cascade) · ลิงก์ TikTok ที่ไม่ใช่ลิงก์คลิปจะถูกปฏิเสธตอนแนบ
 ER = (Likes+Comments+Shares+Saves)/Views×100 · ติด **🔥 แมสแตก!** เมื่อ ER ≥ 10% และ Views ≥ 50,000
-หน้า Admin: `/dashboard/tiktok` · สลับผู้ให้บริการได้ที่ `lib/tiktok-service.ts` (`getProvider`)
+หน้า Admin: `/dashboard/tiktok` (ตารางแสดงชื่องาน + แบรนด์ + ลิงก์คลิป) · Viewer ไม่เห็นสถิติ · สลับผู้ให้บริการได้ที่ `lib/tiktok-service.ts` (`getProvider`)
 ทดสอบ Actor กับลิงก์จริง 10–20 ลิงก์ก่อนใช้งาน ชื่อฟิลด์ input/output ต่างกันตาม Actor
+
+> หมายเหตุ: หลังอัปเดตโครงสร้างนี้ต้องรัน `npx prisma db push` ใหม่ (ตาราง `TikTokPost` ผูกกับ `Attachment` แล้ว ข้อมูล TikTok เดิมที่ส่งผ่านฟอร์มเก่าจะไม่ถูกย้าย)
