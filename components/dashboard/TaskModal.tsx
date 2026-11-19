@@ -10,6 +10,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import { FileText, Loader2, Trash2, UploadCloud, X } from "lucide-react";
 import { usePermissions } from "@/components/role-store";
+import { WorkflowPanel } from "./WorkflowPanel";
 import {
   Attachment, AttachmentKind, Brand, ContentTask, PLATFORMS, PLATFORM_META, STATUSES, STATUS_META,
 } from "@/lib/types";
@@ -48,7 +49,7 @@ export function TaskModal({ open, task, defaultDate, brands, onClose }: Props) {
   const { can } = usePermissions();
   const readOnly = !can("task:edit"); // Viewer = อ่านอย่างเดียว (ตัวบังคับจริงคือ API)
 
-  const { register, control, handleSubmit, reset, watch, formState: { errors } } = useForm<FormValues>({
+  const { register, control, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
   });
 
@@ -196,6 +197,17 @@ export function TaskModal({ open, task, defaultDate, brands, onClose }: Props) {
             )}
           </div>
         </fieldset>
+
+        {task && (
+          <WorkflowPanel
+            task={task}
+            onChanged={(t) => {
+              // ให้ฟอร์มตรงกับของจริงหลังส่งงาน/เปลี่ยนสถานะ ไม่งั้นกด "บันทึก" แล้วเขียนทับสถานะ/ไฟล์ด้วยค่าเก่า
+              setAttachments(t.attachments);
+              setValue("status", t.status);
+            }}
+          />
+        )}
 
         <footer className="flex items-center justify-between border-t px-5 py-3">
           {task && !readOnly ? (
