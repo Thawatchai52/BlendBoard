@@ -405,6 +405,12 @@ input:disabled,select:disabled,textarea:disabled{opacity:.8;cursor:default}
 .tt-act button{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:calc(var(--r) - 4px);padding:3px 9px;font-size:12px}
 .tt-act button:disabled{opacity:.5}
 #tr{display:flex;flex-direction:column;gap:16px}
+.tr-add summary{cursor:pointer;font-weight:600;font-size:14px;font-family:var(--f-head)}
+.tr-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:10px}
+.tr-form .fld.wide{grid-column:1/-1}
+.tr-form input,.tr-form select,.tr-form textarea{width:100%;box-sizing:border-box}
+.tr-prev{width:64px;height:80px;border-radius:8px;object-fit:cover;border:1px solid var(--line);background:var(--surface-2)}
+.tr-mine{position:absolute;left:8px;bottom:8px;background:var(--accent);color:var(--on-accent);border-radius:99px;padding:2px 10px;font-size:12px}
 .tr-head h2{margin:0;font-family:var(--f-head);font-size:22px}
 .tr-head p{margin:4px 0 0;font-size:13px;color:var(--muted)}
 .tr-box{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:10px}
@@ -575,6 +581,23 @@ input:disabled,select:disabled,textarea:disabled{opacity:.8;cursor:default}
     </div>
     <span class="tt-msg" id="trMsg" role="status"></span>
   </div>
+  <details class="tr-box tr-add" id="trAdd">
+    <summary>➕ เพิ่มคลิปตัวอย่างเอง (ไว้ทดลอง: ใส่รูป ลิงก์ ยอดวิวเองได้)</summary>
+    <p class="tr-meta" style="margin:6px 0 0">ใช้ทำคลิป "แมสปลอม" เพื่อดูหน้าตาจริงโดยไม่ต้องต่อ API · ใส่ลิงก์ TikTok จริงที่คุณอยากโชว์ก็ได้ กดแล้วจะเปิดคลิปนั้น · ข้อมูลเก็บในเบราว์เซอร์เครื่องนี้ ไม่ถูกลบตอนกดดึงเทรนด์</p>
+    <form class="tr-form" id="trForm" novalidate>
+      <label class="fld wide"><span>ลิงก์คลิป (https)</span><input type="url" id="mLink" placeholder="https://www.tiktok.com/@ชื่อ/video/..."></label>
+      <label class="fld"><span>ภาพปก: เลือกไฟล์รูป</span><input type="file" id="mFile" accept="image/*"></label>
+      <label class="fld"><span>หรือวางลิงก์รูป (https)</span><input type="url" id="mImg" placeholder="https://.../cover.jpg"></label>
+      <div class="fld"><span>ตัวอย่างภาพปก</span><img class="tr-prev" id="mPrev" alt="" hidden></div>
+      <label class="fld wide"><span>แคปชันสั้น ๆ</span><textarea id="mCap" rows="2" maxlength="200" placeholder="เช่น ครัวซองต์ชาไทยกรอบนอกนุ่มใน #เบเกอรี่"></textarea></label>
+      <label class="fld"><span>ยอดวิว</span><input type="number" id="mViews" min="0" step="1" value="120000"></label>
+      <label class="fld"><span>ไลก์ (เว้นว่าง = 12% ของวิว)</span><input type="number" id="mLikes" min="0" step="1"></label>
+      <label class="fld"><span>หมวดหมู่</span><select id="mCat"><option value="auto">เดาจากแคปชัน</option><option value="bakery">🥐 เบเกอรี่</option><option value="drink">🧋 เครื่องดื่ม</option></select></label>
+      <label class="fld"><span>ลงมาแล้วกี่วัน (0-6)</span><input type="number" id="mAge" min="0" max="6" step="1" value="1"></label>
+      <label class="fld"><span>ชื่อช่อง (ไม่ใส่ก็ได้)</span><input type="text" id="mAuthor" maxlength="40" placeholder="bake.with.mint"></label>
+      <div class="fld wide"><button type="submit" class="btn primary">เพิ่มเข้ารายการเทรนด์</button> <span class="tt-msg" id="mMsg" role="status"></span></div>
+    </form>
+  </details>
   <div class="tr-bar">
     <div class="seg" id="trCats" role="group" aria-label="หมวดหมู่"></div>
     <div class="seg" id="trSort" role="group" aria-label="เรียงตาม">
@@ -1122,13 +1145,14 @@ function trSimFetch(kws){
   });
   return Object.keys(out).map(function(k){return out[k]});
 }
-var tr={kw:TR_DEFAULT_KW.slice(),results:[],fetchedAt:null,saved:[],cat:'ALL',sort:'views',busy:false};
-function trSave(){try{localStorage.setItem(TRKEY,JSON.stringify({kw:tr.kw,results:tr.results,fetchedAt:tr.fetchedAt,saved:tr.saved}))}catch(e){}}
+var tr={kw:TR_DEFAULT_KW.slice(),results:[],manual:[],fetchedAt:null,saved:[],cat:'ALL',sort:'views',busy:false};
+function trSave(){try{localStorage.setItem(TRKEY,JSON.stringify({kw:tr.kw,results:tr.results,fetchedAt:tr.fetchedAt,saved:tr.saved,manual:tr.manual}))}catch(e){toast('เก็บข้อมูลไม่ได้ (พื้นที่เต็ม ลองใช้รูปเล็กลง)')}}
 function trLoad(){
   try{var d=JSON.parse(localStorage.getItem(TRKEY)||'null');if(d){
     if(Array.isArray(d.kw)&&d.kw.length)tr.kw=d.kw.filter(function(x){return typeof x==='string'}).slice(0,12);
     if(Array.isArray(d.results))tr.results=d.results;
     if(Array.isArray(d.saved))tr.saved=d.saved;
+    if(Array.isArray(d.manual))tr.manual=d.manual;
     tr.fetchedAt=d.fetchedAt||null}}catch(e){}
 }
 function trNorm(raw){
@@ -1138,9 +1162,10 @@ function trNorm(raw){
   if(!/^[\w฀-๿.]+$/.test(k))return {ok:false,reason:'ใช้ได้เฉพาะตัวอักษร ตัวเลข และจุด'};
   return {ok:true,k:k};
 }
+function trAll(){return tr.results.concat(tr.manual)}
 function trVisible(){
   var cut=Date.now()-TR_WINDOW_DAYS*864e5;
-  var list=tr.results.filter(function(c){return c.postedAt>=cut&&c.cat&&(tr.cat==='ALL'||c.cat===tr.cat)});
+  var list=trAll().filter(function(c){return c.postedAt>=cut&&c.cat&&(tr.cat==='ALL'||c.cat===tr.cat)});
   var key=function(c){return tr.sort==='er'?ttER(c):c.views};
   return list.sort(function(a,b){return (key(b)||0)-(key(a)||0)});
 }
@@ -1153,22 +1178,22 @@ function renderTR(){
   $('#trFetch').disabled=tr.busy||!tr.kw.length;
   $('#trFetch').textContent=tr.busy?'กำลังดึงเทรนด์...':'ดึงเทรนด์ล่าสุด';
   var f=tr.fetchedAt?new Date(tr.fetchedAt):null;
-  $('#trMeta').textContent=f?'อัปเดตล่าสุด '+f.getDate()+' '+MSHORT[f.getMonth()]+' '+pad(f.getHours())+':'+pad(f.getMinutes())+' · '+tr.results.filter(function(c){return c.cat}).length+' คลิป':'ยังไม่เคยดึง กด "ดึงเทรนด์ล่าสุด"';
+  $('#trMeta').textContent=f?'อัปเดตล่าสุด '+f.getDate()+' '+MSHORT[f.getMonth()]+' '+pad(f.getHours())+':'+pad(f.getMinutes())+' · '+trAll().filter(function(c){return c.cat}).length+' คลิป':'ยังไม่เคยดึง กด "ดึงเทรนด์ล่าสุด"';
   $('#trCats').innerHTML=TR_CATS.map(function(c){
-    var n=tr.results.filter(function(x){return x.cat&&(c.id==='ALL'||x.cat===c.id)&&x.postedAt>=Date.now()-TR_WINDOW_DAYS*864e5}).length;
+    var n=trAll().filter(function(x){return x.cat&&(c.id==='ALL'||x.cat===c.id)&&x.postedAt>=Date.now()-TR_WINDOW_DAYS*864e5}).length;
     return '<button type="button" data-tc="'+c.id+'" aria-pressed="'+(tr.cat===c.id)+'">'+c.label+' ('+n+')</button>'}).join('');
   $$('#trSort [data-ts]').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.ts===tr.sort)});
   var list=trVisible();
   $('#trGrid').innerHTML=list.length?list.map(function(c,i){
     var er=ttER(c),vir=ttViral(c),sv=trSavedHas(c.id);
     return '<article class="tr-card" data-id="'+esc(c.id)+'"><div class="tr-cover"><img src="'+esc(c.cover)+'" alt="ภาพปกคลิป '+esc(c.caption.slice(0,40))+'" loading="lazy">'+
-      '<span class="tr-cat">'+(c.cat==='bakery'?'🥐 เบเกอรี่':'🧋 เครื่องดื่ม')+'</span>'+(vir?'<span class="tr-rank">🔥 แมส</span>':'')+'</div>'+
+      '<span class="tr-cat">'+(c.cat==='bakery'?'🥐 เบเกอรี่':'🧋 เครื่องดื่ม')+'</span>'+(vir?'<span class="tr-rank">🔥 แมส</span>':'')+(c.manual?'<span class="tr-mine">ตัวอย่างที่เพิ่มเอง</span>':'')+'</div>'+
       '<div class="tr-body"><div class="tr-views">'+nf(c.views)+'<small>วิว</small></div>'+
       '<div class="tr-sub">ER '+(er==null?'–':er.toFixed(2)+'%')+' · @'+esc(c.author)+' · ลง'+ago(c.postedAt)+'</div>'+
       '<p class="tr-cap">'+esc(c.caption)+'</p>'+
-      '<div class="tr-act"><a href="'+esc(c.url)+'" target="_blank" rel="noopener noreferrer">เปิดแฮชแท็กบน TikTok ↗</a>'+
-      '<button type="button" data-save="'+esc(c.id)+'" aria-pressed="'+sv+'">'+(sv?'✓ เซฟแล้ว':'เซฟเป็นเรฟ')+'</button></div></div></article>';
-  }).join(''):'<div class="tr-empty" style="grid-column:1/-1">'+(tr.results.length?'ไม่มีคลิปในหมวดนี้':'ยังไม่มีข้อมูล กด "ดึงเทรนด์ล่าสุด" เพื่อเริ่ม')+'</div>';
+      '<div class="tr-act"><a href="'+esc(c.url)+'" target="_blank" rel="noopener noreferrer">'+(c.manual?'ดูคลิปต้นทาง ↗':'เปิดแฮชแท็กบน TikTok ↗')+'</a>'+
+      '<button type="button" data-save="'+esc(c.id)+'" aria-pressed="'+sv+'">'+(sv?'✓ เซฟแล้ว':'เซฟเป็นเรฟ')+'</button></div>'+(c.manual?'<div class="tr-act"><button type="button" data-mdel="'+esc(c.id)+'">ลบคลิปตัวอย่างนี้</button></div>':'')+'</div></article>';
+  }).join(''):'<div class="tr-empty" style="grid-column:1/-1">'+(trAll().length?'ไม่มีคลิปในหมวดนี้':'ยังไม่มีข้อมูล กด "ดึงเทรนด์ล่าสุด" เพื่อเริ่ม')+'</div>';
   $('#trLibH').textContent='คลังไอเดีย (เรฟที่เซฟไว้) '+tr.saved.length;
   $('#trLib').innerHTML=tr.saved.length?tr.saved.slice().reverse().map(function(x){
     return '<li data-id="'+esc(x.id)+'"><img src="'+esc(x.cover)+'" alt=""><div class="t"><b>'+esc(x.caption)+'</b><small>'+nf(x.views)+' วิว · @'+esc(x.author)+'</small></div>'+
@@ -1189,7 +1214,7 @@ function trFetch(){
 }
 function trSetSaved(id,on){
   if(!isMgr())return;
-  var c=tr.results.filter(function(x){return x.id===id})[0]||tr.saved.filter(function(x){return x.id===id})[0];
+  var c=trAll().filter(function(x){return x.id===id})[0]||tr.saved.filter(function(x){return x.id===id})[0];
   if(on&&c&&!trSavedHas(id)){tr.saved.push({id:c.id,url:c.url,cover:c.cover,caption:c.caption,views:c.views,author:c.author,cat:c.cat,savedAt:Date.now()});toast('เซฟเป็นเรฟแล้ว')}
   if(!on){tr.saved=tr.saved.filter(function(x){return x.id!==id});toast('เอาออกจากคลังแล้ว')}
   trSave();renderTR();
@@ -1201,6 +1226,7 @@ $('#tr').addEventListener('click',function(e){
   var c=t.closest('[data-tc]');if(c){tr.cat=c.dataset.tc;renderTR();return}
   var so=t.closest('[data-ts]');if(so){tr.sort=so.dataset.ts;renderTR();return}
   var sv=t.closest('[data-save]');if(sv){trSetSaved(sv.dataset.save,!trSavedHas(sv.dataset.save));return}
+  var md=t.closest('[data-mdel]');if(md){tr.manual=tr.manual.filter(function(x){return x.id!==md.dataset.mdel});tr.saved=tr.saved.filter(function(x){return x.id!==md.dataset.mdel});trSave();renderTR();toast('ลบคลิปตัวอย่างแล้ว');return}
   var us=t.closest('[data-unsave]');if(us){trSetSaved(us.dataset.unsave,false);return}
   var br=t.closest('[data-brief]');
   if(br){
@@ -1220,6 +1246,50 @@ $('#tr').addEventListener('keydown',function(e){
     if(tr.kw.length>=12){trMsg('ใส่ได้สูงสุด 12 คีย์เวิร์ด','err');return}
     tr.kw.push(r.k);trMsg('');trSave();renderTR();$('#trKwIn').focus();
   }
+});
+/* ---- เพิ่มคลิปตัวอย่างเอง ---- */
+var mCover='';   /* data URL ของรูปที่เลือก (ย่อแล้ว) */
+function resizeImg(file,cb){
+  var fr=new FileReader();
+  fr.onload=function(){var im=new Image();im.onload=function(){
+    var W=400,H=500,c=document.createElement('canvas');c.width=W;c.height=H;var g=c.getContext('2d');
+    var k=Math.max(W/im.width,H/im.height),w=im.width*k,h=im.height*k;
+    g.fillStyle='#222';g.fillRect(0,0,W,H);g.drawImage(im,(W-w)/2,(H-h)/2,w,h);   /* ครอปเต็มกรอบ 4:5 */
+    cb(c.toDataURL('image/jpeg',.82));
+  };im.onerror=function(){cb(null)};im.src=fr.result};
+  fr.onerror=function(){cb(null)};fr.readAsDataURL(file);
+}
+function mPreview(src){var im=$('#mPrev');if(src){im.src=src;im.hidden=false}else{im.hidden=true;im.removeAttribute('src')}}
+function mMsg(t,cls){var m=$('#mMsg');m.textContent=t||'';m.className='tt-msg'+(cls?' '+cls:'')}
+$('#mFile').addEventListener('change',function(e){
+  var f=e.target.files&&e.target.files[0];if(!f)return;
+  if(!/^image\//.test(f.type)){mMsg('เลือกได้เฉพาะไฟล์รูป','err');e.target.value='';return}
+  if(f.size>15*1024*1024){mMsg('รูปใหญ่เกิน 15 MB','err');e.target.value='';return}
+  resizeImg(f,function(d){if(!d){mMsg('อ่านรูปไม่ได้','err');return}mCover=d;$('#mImg').value='';mPreview(d);mMsg('')});
+});
+$('#mImg').addEventListener('input',function(e){
+  var v=e.target.value.trim();
+  if(/^https:\/\//i.test(v)){mCover='';mPreview(v);$('#mFile').value=''}else if(!v&&!mCover)mPreview(null);
+});
+$('#mPrev').addEventListener('error',function(){mMsg('โหลดรูปจากลิงก์นี้ไม่ได้ (เว็บต้นทางอาจไม่ให้ฝังรูป) ลองอัปโหลดไฟล์แทน','err')});
+$('#trForm').addEventListener('submit',function(e){
+  e.preventDefault();if(!isMgr())return;
+  var link=$('#mLink').value.trim(),img=$('#mImg').value.trim(),cap=$('#mCap').value.trim();
+  var u;try{u=new URL(link)}catch(x){mMsg('ลิงก์คลิปไม่ถูกต้อง','err');return}
+  if(u.protocol!=='https:'){mMsg('ลิงก์คลิปต้องขึ้นต้นด้วย https://','err');return}
+  if(!cap){mMsg('ใส่แคปชันสั้น ๆ ก่อน','err');return}
+  var cover=mCover||(/^https:\/\//i.test(img)?img:'');
+  if(!cover){mMsg('เลือกรูปปก หรือวางลิงก์รูป https','err');return}
+  var views=Math.round(Number($('#mViews').value));if(!(views>=0)){mMsg('ยอดวิวไม่ถูกต้อง','err');return}
+  var likesRaw=$('#mLikes').value.trim(),likes=likesRaw===''?Math.round(views*.12):Math.round(Number(likesRaw));
+  if(!(likes>=0)){mMsg('ไลก์ไม่ถูกต้อง','err');return}
+  var cat=$('#mCat').value;if(cat==='auto')cat=trClassify(cap);
+  if(!cat){mMsg('เดาหมวดจากแคปชันไม่ได้ เลือกหมวดเอง (เบเกอรี่/เครื่องดื่ม)','err');return}
+  var age=Math.min(6,Math.max(0,Math.round(Number($('#mAge').value)||0)));
+  var au=$('#mAuthor').value.trim().replace(/^@/,'').replace(/[^\w.]/g,'').slice(0,40)||(/@([\w.]+)/.exec(u.pathname)||[])[1]||'ตัวอย่าง';
+  tr.manual.push({id:'m'+uid(),manual:true,url:u.href,author:au,caption:cap.slice(0,200),cover:cover,views:views,likes:likes,comments:0,shares:0,saves:0,
+    postedAt:Date.now()-age*864e5-3600e3,cat:cat});
+  trSave();mCover='';mPreview(null);$('#trForm').reset();mMsg('เพิ่มแล้ว ดูในรายการด้านล่าง','ok');renderTR();
 });
 $('#trFetch').onclick=trFetch;
 $('#trKwReset').onclick=function(){if(!isMgr())return;tr.kw=TR_DEFAULT_KW.slice();trMsg('');trSave();renderTR()};
