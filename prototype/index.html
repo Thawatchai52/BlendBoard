@@ -604,6 +604,7 @@ input[type=text],input[type=url],input[type=number],input[type=datetime-local],s
     <button class="btn primary" id="newBtn">+ สร้างคอนเทนต์</button>
   </div>
 
+  <div class="demo cloudask" id="cloudErr" hidden role="alert"></div>
   <div class="demo cloudask" id="cloudAsk" hidden><span id="cloudAskTxt"></span> <button type="button" id="cloudUp" class="btn primary">อัปโหลดขึ้นออนไลน์</button> <button type="button" id="cloudDiscard" class="btn">เริ่มใหม่ (ลบข้อมูลในเครื่องนี้)</button></div>
 
   <div class="demo" id="demoBar">
@@ -837,13 +838,16 @@ var CLOUD=Object.assign({url:'https://cakkzaxuulsoiyafrnda.supabase.co',key:'sb_
 var Cloud=(function(){
   var on=!!(CLOUD.url&&CLOUD.key),K={},q=Promise.resolve(),state='idle',tm=null;
   function H(x){var h={apikey:CLOUD.key,'Content-Type':'application/json'};if(CLOUD.key.indexOf('sb_')!==0)h.Authorization='Bearer '+CLOUD.key;return Object.assign(h,x||{})}
-  function api(path,opt){return fetch(CLOUD.url.replace(/\/$/,'')+'/rest/v1/'+path,opt).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r})}
+  var lastErr='';
+  function api(path,opt){return fetch(CLOUD.url.replace(/\/$/,'')+'/rest/v1/'+path,opt).then(function(r){if(!r.ok)return r.text().then(function(t){var m='';try{m=JSON.parse(t).message||''}catch(e){m=t}throw new Error('HTTP '+r.status+(m?' '+String(m).slice(0,90):''))});return r})}
   function reg(kind,get,norm,guard,label){K[kind]={get:get,norm:norm||function(x){return x},guard:guard||function(){return false},label:label,synced:{},last:'1970-01-01T00:00:00Z',first:true,hold:false}}
   function js(kind,x){return JSON.stringify(K[kind].norm(x))}
   function paint(){
     var e=document.getElementById('cloudPill');if(!e)return;
     e.hidden=!on;e.dataset.s=state;
     e.textContent=state==='sync'?'กำลังซิงก์…':state==='ok'?'ออนไลน์ ✓':state==='err'?'ออฟไลน์ · จะลองใหม่':'';
+    e.title=state==='err'?lastErr:'';
+    var d=document.getElementById('cloudErr');if(d){d.hidden=state!=='err';d.textContent=state==='err'?'สาเหตุ: '+lastErr:''}
   }
   function setState(x){state=x;paint()}
   function inPlace(dst,src){Object.keys(dst).forEach(function(k){delete dst[k]});Object.assign(dst,JSON.parse(JSON.stringify(src)))}
@@ -897,7 +901,7 @@ var Cloud=(function(){
     var names=Object.keys(K),any=false;
     q=q.then(function(){
       return names.reduce(function(p,n){return p.then(function(){return push(n)}).then(function(){return pull(n)}).then(function(ch){if(ch){any=true;cache(n)}})},Promise.resolve());
-    }).then(function(){setState('ok');if(any)refresh();resolveHolds()}).catch(function(){setState('err')});
+    }).then(function(){setState('ok');if(any)refresh();resolveHolds()}).catch(function(e){lastErr=(e&&e.message)||'เชื่อมต่อไม่ได้ (เครือข่ายหรือ URL ผิด)';setState('err')});
     return q;
   }
   function changed(){if(!on)return;clearTimeout(tm);tm=setTimeout(cycle,300)}
