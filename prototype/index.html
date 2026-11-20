@@ -231,7 +231,7 @@ dialog form{display:flex;flex-direction:column;max-height:calc(100vh - 24px)}
 .fld{display:flex;flex-direction:column;gap:5px}
 .fld>span,.lbl{font-size:13px;font-weight:500}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-input[type=text],input[type=datetime-local],select,textarea{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:calc(var(--r) - 4px);padding:8px 10px;min-width:0}
+input[type=text],input[type=url],input[type=number],input[type=datetime-local],select,textarea{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:calc(var(--r) - 4px);padding:8px 10px;min-width:0}
 select:disabled{opacity:.85}
 textarea{resize:vertical}
 .err{color:var(--s-revision);font-size:12px}
@@ -412,6 +412,24 @@ input:disabled,select:disabled,textarea:disabled{opacity:.8;cursor:default}
 .tr-form input,.tr-form select,.tr-form textarea{width:100%;box-sizing:border-box}
 .tr-prev{width:64px;height:80px;border-radius:8px;object-fit:cover;border:1px solid var(--line);background:var(--surface-2)}
 .tr-mine{position:absolute;left:8px;bottom:8px;background:var(--accent);color:var(--on-accent);border-radius:99px;padding:2px 10px;font-size:12px}
+.sk-head h2{margin:0;font-family:var(--f-head);font-size:22px}
+.sk-head p{margin:4px 0 0;font-size:13px;color:var(--muted)}
+.sk-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.sk-form .fld.wide{grid-column:1/-1}
+.sk-form input,.sk-form select,.sk-form textarea{width:100%;box-sizing:border-box}
+.sk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.sk-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.sk-card.used{opacity:.7}
+.sk-card h4{margin:0;font-size:14px;overflow-wrap:anywhere}
+.sk-top{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.sk-st{font-size:11px;font-weight:700;border-radius:99px;padding:1px 8px;border:1px solid var(--line);color:var(--muted)}
+.sk-st.ready{color:#2B8A3E;border-color:#2B8A3E}
+.sk-note{margin:0;font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+.sk-meta{font-size:11px;color:var(--muted)}
+.sk-act{display:flex;gap:6px;flex-wrap:wrap}
+.sk-act a,.sk-act button{border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:calc(var(--r) - 4px);padding:4px 9px;font-size:12px;cursor:pointer;text-decoration:none}
+.sk-act a.go{background:var(--accent,var(--fg));color:var(--on-accent,var(--bg));border-color:transparent}
+.sk-empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:28px 12px;border:1px dashed var(--line);border-radius:var(--r)}
 .tr-head h2{margin:0;font-family:var(--f-head);font-size:22px}
 .tr-head p{margin:4px 0 0;font-size:13px;color:var(--muted)}
 .tr-box{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:10px}
@@ -508,6 +526,7 @@ input:disabled,select:disabled,textarea:disabled{opacity:.8;cursor:default}
     <p class="perm" id="uPerm"></p>
     <div class="seg" id="topNav" role="group" aria-label="หน้า">
       <button type="button" id="navCal" aria-pressed="true">ปฏิทิน</button>
+      <button type="button" id="navSK" aria-pressed="false">คลังสต็อก</button>
       <button type="button" id="navTT" aria-pressed="false" hidden>สถิติ TikTok</button>
       <button type="button" id="navTR" aria-pressed="false" hidden>Trend Radar</button>
     </div>
@@ -565,6 +584,26 @@ input:disabled,select:disabled,textarea:disabled{opacity:.8;cursor:default}
     <aside class="filters" id="filters" aria-label="ตัวกรอง"></aside>
     <main id="view"></main>
   </div>
+
+  <section id="sk" hidden aria-labelledby="skH">
+  <div class="sk-head">
+    <h2 id="skH">คลังสต็อกวิดีโอ</h2>
+    <p>เก็บลิงก์ Google Drive ของวิดีโอที่ทำเสร็จแล้ว ไว้ใช้ในวันที่ไม่ได้ทำตารางใหม่ · แยกตามแบรนด์ที่เลือกอยู่</p>
+  </div>
+  <form class="tr-box sk-form" id="skForm" novalidate>
+    <label class="fld wide"><span>ชื่อวิดีโอ</span><input type="text" id="skTitle" maxlength="120" placeholder="เช่น รีวิวครัวซองต์ชาไทย (ตัดเสร็จ v2)"></label>
+    <label class="fld"><span>ประเภทงาน</span><select id="skCt"></select></label>
+    <label class="fld wide"><span>ลิงก์ Google Drive (https)</span><input type="url" id="skUrl" placeholder="https://drive.google.com/file/d/..."></label>
+    <label class="fld wide"><span>โน้ต (ไม่ใส่ก็ได้)</span><textarea id="skNote" rows="2" maxlength="300" placeholder="เช่น ใช้ได้ทั้งปี ไม่มีโปรโมชันในคลิป"></textarea></label>
+    <div class="fld wide"><button type="submit" class="btn primary">เพิ่มเข้าคลังสต็อก</button> <span class="tt-msg" id="skMsg" role="status"></span></div>
+  </form>
+  <div class="tr-bar">
+    <div class="seg" id="skSt" role="group" aria-label="สถานะ"></div>
+    <select id="skFilt" aria-label="กรองตามประเภทงาน"></select>
+    <span class="tr-meta" id="skMeta"></span>
+  </div>
+  <div class="sk-grid" id="skGrid"></div>
+</section>
 
   <section id="tr" hidden aria-labelledby="trH">
   <div class="tr-head">
@@ -1083,13 +1122,15 @@ function setSection(s){
   if((s==='tr'||s==='tt')&&!isMgr())s='cal';   // สถิติ TikTok และ Trend Radar เฉพาะ Admin
   section=s;
   ['.toolbar','.demo','.summary','.main'].forEach(function(q){var el=$('#app > '+q);if(el)el.hidden=(s!=='cal')});
-  $('#tt').hidden=(s!=='tt');$('#tr').hidden=(s!=='tr');
+  $('#tt').hidden=(s!=='tt');$('#tr').hidden=(s!=='tr');$('#sk').hidden=(s!=='sk');
+  $('#navSK').setAttribute('aria-pressed',s==='sk');
   $('#navCal').setAttribute('aria-pressed',s==='cal');
   $('#navTT').setAttribute('aria-pressed',s==='tt');
   $('#navTR').setAttribute('aria-pressed',s==='tr');
-  if(s==='tt')renderTT();else if(s==='tr')renderTR();else render();
+  if(s==='tt')renderTT();else if(s==='tr')renderTR();else if(s==='sk')renderSK();else render();
 }
 $('#navCal').addEventListener('click',function(){setSection('cal')});
+$('#navSK').addEventListener('click',function(){setSection('sk')});
 $('#navTT').addEventListener('click',function(){setSection('tt')});
 $('#navTR').addEventListener('click',function(){setSection('tr')});
 $('#tt').addEventListener('click',function(e){
@@ -1313,6 +1354,64 @@ $('#trFetch').onclick=trFetch;
 $('#trKwReset').onclick=function(){if(!isMgr())return;tr.kw=TR_DEFAULT_KW.slice();trMsg('');trSave();renderTR()};
 trLoad();
 
+/* ---------- คลังสต็อก: ลิงก์ Drive ของวิดีโอที่ทำเสร็จ (ทั้งสองฝั่งเพิ่ม/ดูได้ Admin ลบได้) ---------- */
+var SKKEY='content-calendar-stock-v1';
+var sk={items:[],st:'ALL',ct:'ALL'};
+function skLoad(){try{var d=JSON.parse(localStorage.getItem(SKKEY)||'null');if(d&&Array.isArray(d.items))sk.items=d.items.filter(function(x){return x&&x.id&&skUrlOk(x.url)})}catch(e){}}
+function skSave(){try{localStorage.setItem(SKKEY,JSON.stringify({items:sk.items}))}catch(e){toast('เก็บข้อมูลไม่ได้ (พื้นที่เต็ม)')}}
+var SK_HOSTS=['drive.google.com','docs.google.com','drive.usercontent.google.com','drive.app.goo.gl'];
+function skUrlOk(u){try{var x=new URL(String(u).trim());return x.protocol==='https:'&&SK_HOSTS.indexOf(x.hostname)>-1}catch(e){return false}}
+function skMsg(m,k){var e=$('#skMsg');e.textContent=m||'';e.className='tt-msg'+(k?' '+k:'')}
+function skVisible(){
+  return sk.items.filter(function(x){return x.brand===curBrand&&(sk.st==='ALL'||x.status===sk.st)&&(sk.ct==='ALL'||x.ctype===sk.ct)})
+    .sort(function(a,b){return (a.status===b.status?0:a.status==='READY'?-1:1)||b.at-a.at});
+}
+function renderSK(){
+  if(section!=='sk')return;
+  var mine=sk.items.filter(function(x){return x.brand===curBrand});
+  var ready=mine.filter(function(x){return x.status==='READY'}).length;
+  var sel=$('#skCt');
+  if(!sel.options.length)sel.innerHTML='<option value="">เลือกประเภทงาน...</option>'+CTYPES.map(function(c){return '<option value="'+esc(c.id)+'">'+esc(c.label)+' · '+esc(c.desc)+'</option>'}).join('');
+  var fl=$('#skFilt');
+  fl.innerHTML='<option value="ALL">ทุกประเภทงาน</option>'+CTYPES.map(function(c){return '<option value="'+esc(c.id)+'"'+(sk.ct===c.id?' selected':'')+'>'+esc(c.label)+'</option>'}).join('');
+  $('#skSt').innerHTML=[['ALL','ทั้งหมด ('+mine.length+')'],['READY','พร้อมใช้ ('+ready+')'],['USED','ใช้แล้ว ('+(mine.length-ready)+')']].map(function(a){return '<button type="button" data-sks="'+a[0]+'" aria-pressed="'+(sk.st===a[0])+'">'+a[1]+'</button>'}).join('');
+  $('#skMeta').textContent=BRANDS[curBrand].name+' · พร้อมใช้ '+ready+' คลิป';
+  var list=skVisible();
+  $('#skGrid').innerHTML=list.length?list.map(function(x){
+    var d=new Date(x.at);
+    return '<article class="sk-card'+(x.status==='USED'?' used':'')+'" data-id="'+esc(x.id)+'"><div class="sk-top">'+ctHTML(x.ctype)+
+      '<span class="sk-st'+(x.status==='READY'?' ready':'')+'">'+(x.status==='READY'?'พร้อมใช้':'ใช้แล้ว')+'</span></div>'+
+      '<h4>'+esc(x.title)+'</h4>'+(x.note?'<p class="sk-note">'+esc(x.note)+'</p>':'')+
+      '<div class="sk-meta">เพิ่ม '+d.getDate()+' '+MSHORT[d.getMonth()]+'</div>'+
+      '<div class="sk-act"><a class="go" href="'+esc(x.url)+'" target="_blank" rel="noopener noreferrer">เปิดใน Drive ↗</a>'+
+      '<button type="button" data-skc="'+esc(x.id)+'">คัดลอกลิงก์</button>'+
+      '<button type="button" data-skt="'+esc(x.id)+'">'+(x.status==='READY'?'ใช้แล้ว':'คืนเป็นพร้อมใช้')+'</button>'+
+      (isMgr()?'<button type="button" data-skd="'+esc(x.id)+'">'+(sk.del===x.id?'กดอีกครั้งเพื่อลบ':'ลบ')+'</button>':'')+'</div></article>';
+  }).join(''):'<div class="sk-empty">'+(mine.length?'ไม่มีคลิปในตัวกรองนี้':'ยังไม่มีวิดีโอในคลังของ '+esc(BRANDS[curBrand].name)+' วางลิงก์ Drive ของคลิปที่ทำเสร็จด้านบนได้เลย')+'</div>';
+}
+$('#skForm').addEventListener('submit',function(e){
+  e.preventDefault();
+  var t=$('#skTitle').value.trim(),c=$('#skCt').value,u=$('#skUrl').value.trim();
+  if(!t){skMsg('ใส่ชื่อวิดีโอก่อน','err');$('#skTitle').focus();return}
+  if(!c){skMsg('เลือกประเภทงานก่อน','err');$('#skCt').focus();return}
+  if(!skUrlOk(u)){skMsg('ต้องเป็นลิงก์ https จาก Google Drive (drive.google.com / docs.google.com)','err');$('#skUrl').focus();return}
+  sk.items.push({id:uid(),brand:curBrand,title:t,ctype:c,url:u,note:$('#skNote').value.trim(),status:'READY',at:Date.now()});
+  skSave();$('#skForm').reset();skMsg('เพิ่มเข้าคลังแล้ว','ok');renderSK();
+});
+$('#sk').addEventListener('click',function(e){
+  var t=e.target,b;
+  if(b=t.closest('[data-sks]')){sk.st=b.dataset.sks;renderSK();return}
+  if(b=t.closest('[data-skt]')){var it=sk.items.filter(function(x){return x.id===b.dataset.skt})[0];if(it){it.status=it.status==='READY'?'USED':'READY';skSave();renderSK()}return}
+  if(b=t.closest('[data-skc]')){var it2=sk.items.filter(function(x){return x.id===b.dataset.skc})[0];if(!it2)return;
+    var ok=function(){toast('คัดลอกลิงก์แล้ว')},no=function(){toast('คัดลอกไม่ได้ ใช้ปุ่ม "เปิดใน Drive" แทน')};
+    try{navigator.clipboard.writeText(it2.url).then(ok,no)}catch(x){no()}return}
+  if(b=t.closest('[data-skd]')){if(!isMgr())return;
+    if(sk.del===b.dataset.skd){sk.items=sk.items.filter(function(x){return x.id!==b.dataset.skd});sk.del=null;skSave();toast('ลบออกจากคลังแล้ว')}else{sk.del=b.dataset.skd}
+    renderSK();return}
+});
+$('#skFilt').addEventListener('change',function(){sk.ct=this.value;renderSK()});
+skLoad();
+
 /* ---------- ปรับ UI ตามสิทธิ์ของประตูที่เลือก ---------- */
 function applyRole(){
   var mgr=isMgr();
@@ -1333,6 +1432,7 @@ function applyRole(){
   if(section==='tr'&&!mgr)setSection('cal');
   if(section==='tt')renderTT();
   if(section==='tr')renderTR();
+  if(section==='sk')renderSK();
 }
 
 /* ---------- ประตูทางเข้า: เช็ครหัสผ่านก่อนเข้า Dashboard ---------- */
