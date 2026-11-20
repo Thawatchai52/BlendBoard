@@ -833,10 +833,10 @@ var tasks=[];
 /* ---------- ออนไลน์: ซิงก์ข้อมูลผ่าน Supabase ให้ทุกคนเห็นตรงกัน ----------
    ใส่ url + key ที่นี่ (ดู prototype/supabase-setup.sql) · เว้นว่าง = ใช้ในเครื่องนี้อย่างเดียวเหมือนเดิม
    ซิงก์ทีละรายการ (งาน / คลังสต็อก / ไอเดียที่เซฟ / คลิปที่เพิ่มเอง) · ทุก ~8 วิ ดึงของคนอื่นมารวม */
-var CLOUD=Object.assign({url:'',key:'',poll:8000},window.__CLOUD_OVERRIDE||{});
+var CLOUD=Object.assign({url:'https://cakkzaxuulsoiyafrnda.supabase.co',key:'sb_publishable_busCeu0E4OC5MVk2zCtIHw_z2MiDTYZ',poll:8000},window.__CLOUD_OVERRIDE||{});
 var Cloud=(function(){
   var on=!!(CLOUD.url&&CLOUD.key),K={},q=Promise.resolve(),state='idle',tm=null;
-  function H(x){return Object.assign({apikey:CLOUD.key,Authorization:'Bearer '+CLOUD.key,'Content-Type':'application/json'},x||{})}
+  function H(x){var h={apikey:CLOUD.key,'Content-Type':'application/json'};if(CLOUD.key.indexOf('sb_')!==0)h.Authorization='Bearer '+CLOUD.key;return Object.assign(h,x||{})}
   function api(path,opt){return fetch(CLOUD.url.replace(/\/$/,'')+'/rest/v1/'+path,opt).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r})}
   function reg(kind,get,norm,guard,label){K[kind]={get:get,norm:norm||function(x){return x},guard:guard||function(){return false},label:label,synced:{},last:'1970-01-01T00:00:00Z',first:true,hold:false}}
   function js(kind,x){return JSON.stringify(K[kind].norm(x))}
