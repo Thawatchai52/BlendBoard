@@ -265,6 +265,12 @@ textarea{resize:vertical}
 .who{display:flex;align-items:center;gap:8px}
 .avatar{width:32px;height:32px;border-radius:50%;background:var(--accent);color:var(--on-accent);display:grid;place-items:center;font-family:var(--f-head);font-weight:600}
 .uname{font-weight:600;line-height:1.2}
+.cloudpill{font-size:12px;font-weight:600;border-radius:99px;padding:2px 10px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.cloudpill[data-s=ok]{color:var(--s-approved);border-color:var(--s-approved)}
+.cloudpill[data-s=err]{color:var(--s-revision);border-color:var(--s-revision)}
+.cloudask{border-style:solid}
+.cloudask .btn{border:1px solid var(--line);text-decoration:none;padding:6px 13px;color:var(--fg)}
+.cloudask .btn.primary{color:var(--on-accent);border-color:var(--accent)}
 .rolebadge{display:inline-block;font-size:12px;font-weight:600;border-radius:99px;padding:2px 10px;background:var(--surface-2);color:var(--muted);margin-right:4px}
 .rolebadge.mgr{background:color-mix(in srgb,var(--accent) 18%,var(--surface));color:var(--accent)}
 .rolebadge.cur{outline:2px solid var(--accent);outline-offset:1px}
@@ -555,6 +561,7 @@ input[type=text],input[type=url],input[type=number],input[type=datetime-local],s
       <button type="button" id="navTT" aria-pressed="false" hidden>สถิติ TikTok</button>
       <button type="button" id="navTR" aria-pressed="false" hidden>Trend Radar</button>
     </div>
+    <span class="cloudpill" id="cloudPill" hidden role="status" aria-live="polite"></span>
     <button type="button" class="btn" id="logoutBtn">ออกจากระบบ</button>
   </div>
 
@@ -597,7 +604,9 @@ input[type=text],input[type=url],input[type=number],input[type=datetime-local],s
     <button class="btn primary" id="newBtn">+ สร้างคอนเทนต์</button>
   </div>
 
-  <div class="demo">
+  <div class="demo cloudask" id="cloudAsk" hidden><span id="cloudAskTxt"></span> <button type="button" id="cloudUp" class="btn primary">อัปโหลดขึ้นออนไลน์</button> <button type="button" id="cloudDiscard" class="btn">เริ่มใหม่ (ลบข้อมูลในเครื่องนี้)</button></div>
+
+  <div class="demo" id="demoBar">
     <span id="demoText">ข้อมูลที่เห็นเป็นตัวอย่าง ลากการ์ดเพื่อเลื่อนวัน ข้อมูลเก็บในเบราว์เซอร์เครื่องนี้</span>
     <button id="clearDemo">ล้างข้อมูลตัวอย่างทั้งหมด</button>
     <button id="resetDemo">โหลดตัวอย่างใหม่</button>
@@ -821,6 +830,104 @@ function demoArt(b){
 
 /* ---------- state ---------- */
 var tasks=[];
+/* ---------- ออนไลน์: ซิงก์ข้อมูลผ่าน Supabase ให้ทุกคนเห็นตรงกัน ----------
+   ใส่ url + key ที่นี่ (ดู prototype/supabase-setup.sql) · เว้นว่าง = ใช้ในเครื่องนี้อย่างเดียวเหมือนเดิม
+   ซิงก์ทีละรายการ (งาน / คลังสต็อก / ไอเดียที่เซฟ / คลิปที่เพิ่มเอง) · ทุก ~8 วิ ดึงของคนอื่นมารวม */
+var CLOUD=Object.assign({url:'',key:'',poll:8000},window.__CLOUD_OVERRIDE||{});
+var Cloud=(function(){
+  var on=!!(CLOUD.url&&CLOUD.key),K={},q=Promise.resolve(),state='idle',tm=null;
+  function H(x){return Object.assign({apikey:CLOUD.key,Authorization:'Bearer '+CLOUD.key,'Content-Type':'application/json'},x||{})}
+  function api(path,opt){return fetch(CLOUD.url.replace(/\/$/,'')+'/rest/v1/'+path,opt).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r})}
+  function reg(kind,get,norm,guard,label){K[kind]={get:get,norm:norm||function(x){return x},guard:guard||function(){return false},label:label,synced:{},last:'1970-01-01T00:00:00Z',first:true,hold:false}}
+  function js(kind,x){return JSON.stringify(K[kind].norm(x))}
+  function paint(){
+    var e=document.getElementById('cloudPill');if(!e)return;
+    e.hidden=!on;e.dataset.s=state;
+    e.textContent=state==='sync'?'กำลังซิงก์…':state==='ok'?'ออนไลน์ ✓':state==='err'?'ออฟไลน์ · จะลองใหม่':'';
+  }
+  function setState(x){state=x;paint()}
+  function inPlace(dst,src){Object.keys(dst).forEach(function(k){delete dst[k]});Object.assign(dst,JSON.parse(JSON.stringify(src)))}
+  function push(kind){
+    var k=K[kind];if(!on||!k||k.first||k.hold)return Promise.resolve();
+    var arr=k.get(),rows=[],seen={},upd={};
+    arr.forEach(function(x){var id=String(x.id);seen[id]=1;var j=js(kind,x);if(k.synced[id]!==j){rows.push({kind:kind,id:id,data:k.norm(x),deleted:false});upd[id]=j}});
+    Object.keys(k.synced).forEach(function(id){if(!seen[id]){rows.push({kind:kind,id:id,data:{},deleted:true});upd[id]=null}});
+    if(!rows.length)return Promise.resolve();
+    return api('items?on_conflict=kind,id',{method:'POST',headers:H({Prefer:'resolution=merge-duplicates,return=minimal'}),body:JSON.stringify(rows)})
+      .then(function(){Object.keys(upd).forEach(function(id){if(upd[id]===null)delete k.synced[id];else k.synced[id]=upd[id]})});
+  }
+  function since(k){try{var t=Date.parse(k.last);if(isFinite(t)&&t>0)return new Date(t-2000).toISOString()}catch(e){}return '1970-01-01T00:00:00Z'}
+  function pull(kind){
+    var k=K[kind];if(!on||!k)return Promise.resolve(false);
+    return api('items?kind=eq.'+kind+'&select=id,data,deleted,updated_at&order=updated_at.asc&updated_at=gte.'+encodeURIComponent(since(k)),{headers:H()})
+      .then(function(r){return r.json()}).then(function(rows){
+        var arr=k.get(),changed=false;
+        rows.forEach(function(r){if(r.updated_at>k.last)k.last=r.updated_at});
+        if(k.first){
+          k.first=false;
+          var live=rows.filter(function(r){return !r.deleted});
+          if(live.length||!arr.length){
+            arr.length=0;k.synced={};
+            live.forEach(function(r){arr.push(r.data);k.synced[String(r.id)]=js(kind,r.data)});
+            changed=true;
+          }else{k.hold=true}
+          return changed;
+        }
+        rows.forEach(function(r){
+          var id=String(r.id);if(k.guard(id))return;
+          var idx=-1;for(var i=0;i<arr.length;i++)if(String(arr[i].id)===id){idx=i;break}
+          var dirty=idx>-1&&k.synced[id]!==js(kind,arr[idx]);
+          if(r.deleted){if(idx>-1&&!dirty){arr.splice(idx,1);changed=true}if(!dirty||idx<0)delete k.synced[id];return}
+          var j=JSON.stringify(k.norm(r.data));
+          if(k.synced[id]===j||dirty)return;
+          k.synced[id]=j;
+          if(idx>-1)inPlace(arr[idx],r.data);else arr.push(JSON.parse(JSON.stringify(r.data)));
+          changed=true;
+        });
+        return changed;
+      });
+  }
+  function refresh(){
+    if(section==='sk')renderSK();else if(section==='tr')renderTR();else if(section==='tt'){ttSync();renderTT()}else render();
+  }
+  function cache(kind){if(kind==='tasks')save();else if(kind==='stock')skSave();else trSave()}
+  function cycle(){
+    if(!on||document.hidden)return;
+    setState('sync');
+    var names=Object.keys(K),any=false;
+    q=q.then(function(){
+      return names.reduce(function(p,n){return p.then(function(){return push(n)}).then(function(){return pull(n)}).then(function(ch){if(ch){any=true;cache(n)}})},Promise.resolve());
+    }).then(function(){setState('ok');if(any)refresh();resolveHolds()}).catch(function(){setState('err')});
+    return q;
+  }
+  function changed(){if(!on)return;clearTimeout(tm);tm=setTimeout(cycle,300)}
+  function holdInfo(){return Object.keys(K).filter(function(n){return K[n].hold})}
+  function resolveHolds(){
+    var bar=document.getElementById('cloudAsk');if(!bar)return;
+    var hs=holdInfo();
+    if(!hs.length||!role){bar.hidden=true;return}
+    if(!isMgr()){hs.forEach(function(n){K[n].get().length=0;K[n].hold=false;cache(n)});bar.hidden=true;refresh();return}
+    var n=0;hs.forEach(function(x){n+=K[x].get().length});
+    document.getElementById('cloudAskTxt').textContent='ออนไลน์ยังว่างอยู่ แต่เครื่องนี้มีข้อมูลเดิม '+n+' รายการ (งาน/สต็อก/ไอเดีย) จะเอาขึ้นออนไลน์ไหม?';
+    bar.hidden=false;
+  }
+  function upload(){holdInfo().forEach(function(n){K[n].hold=false});resolveHolds();cycle()}
+  function discard(){holdInfo().forEach(function(n){K[n].get().length=0;K[n].hold=false;cache(n)});resolveHolds();refresh();cycle()}
+  function start(){
+    if(!on)return;
+    reg('tasks',function(){return tasks},function(t){var c=Object.assign({},t);c.attachments=(t.attachments||[]).filter(function(a){return !a.session});return c},function(id){return !!(editing&&String(editing.id)===id&&!dlg.hidden&&dlg.open)},'งาน');
+    reg('stock',function(){return sk.items},null,null,'สต็อก');
+    reg('saved',function(){return tr.saved},null,null,'ไอเดีย');
+    reg('manual',function(){return tr.manual},null,null,'คลิปเทรนด์');
+    document.addEventListener('visibilitychange',function(){if(!document.hidden)cycle()});
+    window.addEventListener('online',cycle);
+    var a=document.getElementById('cloudUp'),b=document.getElementById('cloudDiscard');
+    if(a)a.onclick=upload;if(b)b.onclick=discard;
+    paint();cycle();setInterval(cycle,CLOUD.poll);
+  }
+  return {on:on,start:start,changed:changed,resolve:resolveHolds};
+})();
+
 var now=new Date();
 var cur={y:now.getFullYear(),m:now.getMonth()};
 var view='calendar';
@@ -865,7 +972,7 @@ function seed(){
 }
 function load(){
   try{var raw=localStorage.getItem(KEY);if(raw){var d=JSON.parse(raw);if(d&&Array.isArray(d.tasks)){tasks=d.tasks;tasks.forEach(function(t){if(Array.isArray(t.platforms))t.platforms=t.platforms.filter(function(x){return x==='FB'||x==='IG'||x==='TT'})});return}}}catch(e){}
-  tasks=seed();
+  tasks=CLOUD.url&&CLOUD.key?[]:seed();
 }
 var toastTimer;
 function toast(msg){var t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(function(){t.hidden=true},2600)}
@@ -876,6 +983,7 @@ function save(){
     localStorage.setItem(KEY,JSON.stringify({tasks:slim}));
   }catch(e){toast('เก็บข้อมูลในเบราว์เซอร์ไม่ได้ (พื้นที่เต็มหรือถูกปิดไว้)')}
   if(typeof ttSync==='function')ttSync();
+  Cloud.changed();
 }
 
 /* ---------- content isolation: ทุกการอ่านผ่าน brandTasks() ---------- */
@@ -1144,7 +1252,8 @@ function setSection(s){
   section=s;
   if((s==='tr'||s==='tt')&&!isMgr())s='cal';   // สถิติ TikTok และ Trend Radar เฉพาะ Admin
   section=s;
-  ['.toolbar','.demo','.summary','.main'].forEach(function(q){var el=$('#app > '+q);if(el)el.hidden=(s!=='cal')});
+  ['.toolbar','#demoBar','.summary','.main'].forEach(function(q){var el=$('#app > '+q);if(el)el.hidden=(s!=='cal')||(q==='#demoBar'&&!!(CLOUD.url&&CLOUD.key))});
+  Cloud.resolve();
   $('#tt').hidden=(s!=='tt');$('#tr').hidden=(s!=='tr');$('#sk').hidden=(s!=='sk');
   $('#navSK').setAttribute('aria-pressed',s==='sk');
   $('#navCal').setAttribute('aria-pressed',s==='cal');
@@ -1228,7 +1337,7 @@ function trSimFetch(kws){
   return Object.keys(out).map(function(k){return out[k]});
 }
 var tr={kw:TR_DEFAULT_KW.slice(),results:[],manual:[],fetchedAt:null,saved:[],cat:'ALL',sort:'views',busy:false};
-function trSave(){try{localStorage.setItem(TRKEY,JSON.stringify({kw:tr.kw,results:tr.results,fetchedAt:tr.fetchedAt,saved:tr.saved,manual:tr.manual}))}catch(e){toast('เก็บข้อมูลไม่ได้ (พื้นที่เต็ม ลองใช้รูปเล็กลง)')}}
+function trSave(){try{localStorage.setItem(TRKEY,JSON.stringify({kw:tr.kw,results:tr.results,fetchedAt:tr.fetchedAt,saved:tr.saved,manual:tr.manual}))}catch(e){toast('เก็บข้อมูลไม่ได้ (พื้นที่เต็ม ลองใช้รูปเล็กลง)')};Cloud.changed()}
 function trLoad(){
   try{var d=JSON.parse(localStorage.getItem(TRKEY)||'null');if(d){
     if(Array.isArray(d.kw)&&d.kw.length)tr.kw=d.kw.filter(function(x){return typeof x==='string'}).slice(0,12);
@@ -1381,7 +1490,7 @@ trLoad();
 var SKKEY='content-calendar-stock-v1';
 var sk={items:[],st:'ALL',ct:'ALL'};
 function skLoad(){try{var d=JSON.parse(localStorage.getItem(SKKEY)||'null');if(d&&Array.isArray(d.items))sk.items=d.items.filter(function(x){return x&&x.id&&skUrlOk(x.url)})}catch(e){}}
-function skSave(){try{localStorage.setItem(SKKEY,JSON.stringify({items:sk.items}))}catch(e){toast('เก็บข้อมูลไม่ได้ (พื้นที่เต็ม)')}}
+function skSave(){try{localStorage.setItem(SKKEY,JSON.stringify({items:sk.items}))}catch(e){toast('เก็บข้อมูลไม่ได้ (พื้นที่เต็ม)')}Cloud.changed()}
 var SK_HOSTS=['drive.google.com','docs.google.com','drive.usercontent.google.com','drive.app.goo.gl'];
 function skUrlOk(u){try{var x=new URL(String(u).trim());return x.protocol==='https:'&&SK_HOSTS.indexOf(x.hostname)>-1}catch(e){return false}}
 function skMsg(m,k){var e=$('#skMsg');e.textContent=m||'';e.className='tt-msg'+(k?' '+k:'')}
@@ -1447,7 +1556,7 @@ function applyRole(){
     ?'สิทธิ์ Admin: สร้าง แก้ไข ลบ ลากสลับวัน และดูสถิติ TikTok ได้'
     :'สิทธิ์ Viewer: อ่านอย่างเดียว ลากเลื่อนไม่ได้ แต่เปิดดูบรีฟ ดาวน์โหลดไฟล์ และวางลิงก์ TikTok เมื่อคอนเทนต์ลงแล้วได้';
   $('#newBtn').hidden=!mgr;
-  $('#clearDemo').hidden=!mgr;$('#resetDemo').hidden=!mgr;
+  $('#clearDemo').hidden=!mgr;$('#resetDemo').hidden=!mgr;$('#demoBar').hidden=!!(CLOUD.url&&CLOUD.key);Cloud.resolve();
   $('#demoText').textContent=mgr
     ?'ข้อมูลที่เห็นเป็นตัวอย่าง ลากการ์ดเพื่อเลื่อนวัน ข้อมูลเก็บในเบราว์เซอร์เครื่องนี้'
     :'ข้อมูลที่เห็นเป็นตัวอย่าง ตอนนี้เป็นโหมดอ่านอย่างเดียว เปิดงานเพื่ออ่านบรีฟ และวางลิงก์ TikTok เมื่อลงแล้วได้';
@@ -1885,5 +1994,6 @@ fillSelects();buildFilters();buildSummary();load();normStatus();ttSync();
 tts.forEach(function(t){if(t.status==='PENDING'||t.status==='FETCHING')ttFetch(t,false)});   /* ค้างตอนปิดหน้า ให้ดึงต่อ */
 applyBrand(brandFromHash()||storedBrand()||'KS');
 initLanding();
+Cloud.start();
 })();
 </script>
