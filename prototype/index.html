@@ -508,7 +508,7 @@ input:disabled,select:disabled,textarea:disabled{opacity:.8;cursor:default}
     <p class="perm" id="uPerm"></p>
     <div class="seg" id="topNav" role="group" aria-label="หน้า">
       <button type="button" id="navCal" aria-pressed="true">ปฏิทิน</button>
-      <button type="button" id="navTT" aria-pressed="false">สถิติ TikTok</button>
+      <button type="button" id="navTT" aria-pressed="false" hidden>สถิติ TikTok</button>
       <button type="button" id="navTR" aria-pressed="false" hidden>Trend Radar</button>
     </div>
     <button type="button" class="btn" id="logoutBtn">ออกจากระบบ</button>
@@ -1080,7 +1080,7 @@ function renderTT(){
 }
 function setSection(s){
   section=s;
-  if(s==='tr'&&!isMgr())s='cal';   // Trend Radar เฉพาะ Admin
+  if((s==='tr'||s==='tt')&&!isMgr())s='cal';   // สถิติ TikTok และ Trend Radar เฉพาะ Admin
   section=s;
   ['.toolbar','.demo','.summary','.main'].forEach(function(q){var el=$('#app > '+q);if(el)el.hidden=(s!=='cal')});
   $('#tt').hidden=(s!=='tt');$('#tr').hidden=(s!=='tr');
@@ -1328,7 +1328,8 @@ function applyRole(){
   $('#demoText').textContent=mgr
     ?'ข้อมูลที่เห็นเป็นตัวอย่าง ลากการ์ดเพื่อเลื่อนวัน ข้อมูลเก็บในเบราว์เซอร์เครื่องนี้'
     :'ข้อมูลที่เห็นเป็นตัวอย่าง ตอนนี้เป็นโหมดอ่านอย่างเดียว เปิดงานเพื่ออ่านบรีฟ และวางลิงก์ TikTok เมื่อลงแล้วได้';
-  $('#navTR').hidden=!mgr;
+  $('#navTR').hidden=!mgr;$('#navTT').hidden=!mgr;
+  if(section==='tt'&&!mgr)setSection('cal');
   if(section==='tr'&&!mgr)setSection('cal');
   if(section==='tt')renderTT();
   if(section==='tr')renderTR();
