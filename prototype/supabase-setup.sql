@@ -27,3 +27,7 @@ drop policy if exists items_update on public.items;
 create policy items_read   on public.items for select to anon using (true);
 create policy items_insert on public.items for insert to anon with check (true);
 create policy items_update on public.items for update to anon using (true) with check (true);
+
+-- สิทธิ์ระดับตาราง (Supabase รุ่นใหม่ไม่แจกให้ตารางที่สร้างเอง ถ้าขาดจะขึ้น "permission denied for table items")
+grant usage on schema public to anon;
+grant select, insert, update on public.items to anon;
