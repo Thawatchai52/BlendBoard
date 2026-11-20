@@ -268,7 +268,7 @@ textarea{resize:vertical}
 .cloudpill{font-size:12px;font-weight:600;border-radius:99px;padding:2px 10px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
 .cloudpill[data-s=ok]{color:var(--s-approved);border-color:var(--s-approved)}
 .cloudpill[data-s=err]{color:var(--s-revision);border-color:var(--s-revision)}
-.cloudask{border-style:solid}
+.cloudask{border-style:solid;border-color:var(--s-revision);background:var(--s-revision-bg);color:var(--fg)}
 .cloudask .btn{border:1px solid var(--line);text-decoration:none;padding:6px 13px;color:var(--fg)}
 .cloudask .btn.primary{color:var(--on-accent);border-color:var(--accent)}
 .rolebadge{display:inline-block;font-size:12px;font-weight:600;border-radius:99px;padding:2px 10px;background:var(--surface-2);color:var(--muted);margin-right:4px}
@@ -845,7 +845,9 @@ var Cloud=(function(){
   function paint(){
     var e=document.getElementById('cloudPill');if(!e)return;
     e.hidden=!on;e.dataset.s=state;
-    e.textContent=state==='sync'?'กำลังซิงก์…':state==='ok'?'ออนไลน์ ✓':state==='err'?'ออฟไลน์ · จะลองใหม่':'';
+    var hh=Object.keys(K).some(function(n){return K[n].hold});
+    e.textContent=hh&&state!=='err'?'⚠ ยังไม่ได้ส่งขึ้นออนไลน์ (รอยืนยัน)':state==='sync'?'กำลังซิงก์…':state==='ok'?'ออนไลน์ ✓':state==='err'?'ออฟไลน์ · จะลองใหม่':'';
+    if(hh&&state!=='err')e.dataset.s='err';
     e.title=state==='err'?lastErr:'';
     var d=document.getElementById('cloudErr');if(d){d.hidden=state!=='err';d.textContent=state==='err'?'สาเหตุ: '+lastErr:''}
   }
@@ -907,6 +909,7 @@ var Cloud=(function(){
   function changed(){if(!on)return;clearTimeout(tm);tm=setTimeout(cycle,300)}
   function holdInfo(){return Object.keys(K).filter(function(n){return K[n].hold})}
   function resolveHolds(){
+    paint();
     var bar=document.getElementById('cloudAsk');if(!bar)return;
     var hs=holdInfo();
     if(!hs.length||!role){bar.hidden=true;return}
