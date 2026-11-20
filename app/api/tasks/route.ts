@@ -66,6 +66,7 @@ export async function POST(req: Request) {
       title: d.title,
       caption: d.caption ?? null,
       brandId: d.brandId,
+      ctype: d.ctype,
       platforms: d.platforms,
       status: d.status,
       publishDate: new Date(d.publishDate),

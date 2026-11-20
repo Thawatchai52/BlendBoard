@@ -4,6 +4,7 @@ import { MAX_FILE_BYTES, isHttpsUrl, validAttachmentKey } from '@/lib/task-rules
 import { isTikTokHost, parseTikTokUrl } from '@/lib/tiktok-url';
 
 export const STATUS = z.enum(['DRAFT', 'IN_REVIEW', 'REVISION', 'APPROVED', 'POSTED']);
+const CTYPE = z.enum(['AW', 'VDO', 'LIFESTYLE', 'TEXT', 'SHARE', 'PHOTO_ALBUM', 'NPD', 'DELIVERY', 'SNACK_BOX']);
 const PLATFORM = z.enum(['FACEBOOK', 'INSTAGRAM', 'TIKTOK', 'YOUTUBE', 'LINE_OA', 'X']);
 const isoDate = z.string().datetime({ offset: true });
 
@@ -24,6 +25,7 @@ export const createTask = z.object({
   title: z.string().trim().min(1).max(150),
   caption: z.string().max(5000).nullish(),
   brandId: z.string().min(1).max(60),
+  ctype: CTYPE,
   platforms: z.array(PLATFORM).min(1).max(6),
   status: STATUS.default('DRAFT'),
   publishDate: isoDate,
@@ -37,6 +39,7 @@ export const patchTask = z
     title: z.string().trim().min(1).max(150),
     caption: z.string().max(5000).nullable(),
     brandId: z.string().min(1).max(60),
+    ctype: CTYPE,
     platforms: z.array(PLATFORM).min(1).max(6),
     status: STATUS,
     comment: z.string().max(2000),

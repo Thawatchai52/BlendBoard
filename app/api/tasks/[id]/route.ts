@@ -62,6 +62,7 @@ export async function PATCH(req: Request, ctx: Ctx) {
         data: {
           title: d.title,
           caption: d.caption,
+          ctype: d.ctype,
           platforms: d.platforms,
           publishDate: d.publishDate ? new Date(d.publishDate) : undefined,
           briefDueAt: d.briefDueAt === undefined ? undefined : d.briefDueAt ? new Date(d.briefDueAt) : null,

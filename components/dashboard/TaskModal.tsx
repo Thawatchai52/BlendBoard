@@ -12,7 +12,7 @@ import { FileText, Loader2, Trash2, UploadCloud, X } from "lucide-react";
 import { usePermissions } from "@/components/role-store";
 import { WorkflowPanel } from "./WorkflowPanel";
 import {
-  Attachment, AttachmentKind, Brand, ContentTask, PLATFORMS, PLATFORM_META, STATUSES, STATUS_META,
+  Attachment, AttachmentKind, Brand, CONTENT_TYPES, CONTENT_TYPE_META, ContentTask, PLATFORMS, PLATFORM_META, STATUSES, STATUS_META,
 } from "@/lib/types";
 
 /* ------------------------------ validation ------------------------------ */
@@ -20,6 +20,7 @@ const formSchema = z.object({
   title: z.string().min(1, "กรุณาใส่หัวข้อคอนเทนต์").max(150),
   caption: z.string().max(5000).optional(),
   brandId: z.string().min(1, "เลือกแบรนด์"),
+  ctype: z.enum(CONTENT_TYPES, { errorMap: () => ({ message: "เลือกประเภทงาน" }) }),
   platforms: z.array(z.enum(PLATFORMS)).min(1, "เลือกอย่างน้อย 1 แพลตฟอร์ม"),
   status: z.enum(STATUSES),
   publishDate: z.string().min(1, "เลือกวัน-เวลาที่จะโพสต์"), // datetime-local
@@ -65,6 +66,7 @@ export function TaskModal({ open, task, defaultDate, brands, onClose }: Props) {
         title: task?.title ?? "",
         caption: task?.caption ?? "",
         brandId: task?.brandId ?? brands[0]?.id ?? "",
+        ctype: (task?.ctype ?? "") as FormValues["ctype"],
         platforms: task?.platforms ?? [],
         status: task?.status ?? "DRAFT",
         publishDate: toLocalInput(task ? parseISO(task.publishDate) : base),
@@ -141,6 +143,15 @@ export function TaskModal({ open, task, defaultDate, brands, onClose }: Props) {
                 </select>
               </Field>
             </div>
+
+            <Field label="ประเภทงาน" error={errors.ctype?.message as string | undefined}>
+              <select {...register("ctype")} className="input">
+                <option value="">เลือกประเภทงาน</option>
+                {CONTENT_TYPES.map((c) => (
+                  <option key={c} value={c}>{CONTENT_TYPE_META[c].label} — {CONTENT_TYPE_META[c].desc}</option>
+                ))}
+              </select>
+            </Field>
 
             <Field label="แพลตฟอร์มเป้าหมาย" error={errors.platforms?.message as string | undefined}>
               <Controller

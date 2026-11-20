@@ -24,6 +24,7 @@ export function toTaskDTO(t: TaskRow) {
     title: t.title,
     caption: t.caption,
     status: t.status,
+    ctype: t.ctype,
     platforms: t.platforms,
     publishDate: t.publishDate.toISOString(),
     briefDueAt: t.briefDueAt?.toISOString() ?? null,

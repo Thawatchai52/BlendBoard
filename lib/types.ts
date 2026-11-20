@@ -2,6 +2,21 @@
 export const STATUSES = ["DRAFT", "IN_REVIEW", "REVISION", "APPROVED", "POSTED"] as const;
 export type Status = (typeof STATUSES)[number];
 
+export const CONTENT_TYPES = ["AW", "VDO", "LIFESTYLE", "TEXT", "SHARE", "PHOTO_ALBUM", "NPD", "DELIVERY", "SNACK_BOX"] as const;
+export type ContentType = (typeof CONTENT_TYPES)[number];
+/** ป้ายตามที่ใช้ใน Excel เดิม */
+export const CONTENT_TYPE_META: Record<ContentType, { label: string; desc: string; tag: string }> = {
+  AW:          { label: "AW",          desc: "อาร์ตเวิร์ก/ภาพนิ่ง",     tag: "bg-orange-100 text-orange-800" },
+  VDO:         { label: "VDO",         desc: "วิดีโอ/คลิปสั้น",         tag: "bg-pink-100 text-pink-800" },
+  LIFESTYLE:   { label: "Lifestyle",   desc: "คอนเทนต์ไลฟ์สไตล์",       tag: "bg-green-100 text-green-800" },
+  TEXT:        { label: "Text",        desc: "ข้อความล้วน",             tag: "bg-cyan-100 text-cyan-800" },
+  SHARE:       { label: "Share",       desc: "แชร์/รีโพสต์",            tag: "bg-indigo-100 text-indigo-800" },
+  PHOTO_ALBUM: { label: "Photo Album", desc: "อัลบั้มภาพ",              tag: "bg-yellow-100 text-yellow-800" },
+  NPD:         { label: "NPD",         desc: "สินค้าใหม่",              tag: "bg-fuchsia-100 text-fuchsia-800" },
+  DELIVERY:    { label: "Delivery",    desc: "เดลิเวอรี/ช่องทางสั่ง",   tag: "bg-sky-100 text-sky-800" },
+  SNACK_BOX:   { label: "Snack Box",   desc: "สแน็กบ็อกซ์",             tag: "bg-lime-100 text-lime-800" },
+};
+
 export const PLATFORMS = ["FACEBOOK", "INSTAGRAM", "TIKTOK", "YOUTUBE", "LINE_OA", "X"] as const;
 export type Platform = (typeof PLATFORMS)[number];
 
@@ -48,6 +63,7 @@ export interface ContentTask {
   title: string;
   caption?: string | null;
   status: Status;
+  ctype?: ContentType | null;
   platforms: Platform[];
   publishDate: string; // ISO string
   briefDueAt?: string | null;
@@ -62,4 +78,5 @@ export interface Filters {
   brandIds: string[];
   statuses: Status[];
   platforms: Platform[];
+  ctypes: ContentType[];
 }

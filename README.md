@@ -1,7 +1,7 @@
 # BlendBoard — Content Calendar (Kudsan · Bellinee's)
 
 ระบบจัดการตารางคอนเทนต์รายเดือนของ 2 แบรนด์ (KS ส้ม / BL น้ำตาล) แทนไฟล์ Excel แยกแบรนด์/เดือน
-ปฏิทิน + Kanban ลากวาง, บรีฟ, วางลิงก์ TikTok เมื่อคอนเทนต์ลงแล้ว (งานขึ้นว่า "ลง TikTok แล้ว" ให้ทั้งสองฝั่งเห็น)
+ปฏิทิน + Kanban ลากวาง, ประเภทงานตาม Excel เดิม (AW / VDO / Lifestyle / Text / Share / Photo Album / NPD / Delivery / Snack Box) กรองได้, บรีฟ, วางลิงก์ TikTok เมื่อคอนเทนต์ลงแล้ว (งานขึ้นว่า "ลง TikTok แล้ว" ให้ทั้งสองฝั่งเห็น)
 และสถิติคลิป TikTok อัตโนมัติ (ER + ป้าย 🔥 แมสแตก!)
 
 **▶ ลองใช้งานเว็บต้นแบบ: https://thawatchai52.github.io/BlendBoard/** (เปิดแล้วเข้าได้เลย ข้อมูลเก็บในเบราว์เซอร์ของคุณ)
@@ -90,3 +90,4 @@ ER = (Likes+Comments+Shares+Saves)/Views×100 · ติด **🔥 แมสแ�
 - กดดึงซ้ำได้ทุก 30 นาที (กันเสียเครดิต) · ลิงก์ภาพปกของ TikTok หมดอายุได้ หน้าเว็บมีภาพสำรอง
 - ใช้ `npx prisma db push` เพื่อสร้างตาราง `TrendKeyword` `TrendClip` `SavedIdea`
 
+> **ประเภทงาน (`ctype`):** เพิ่มคอลัมน์ใน `ContentTask` (รัน `npx prisma db push` ใหม่) · สร้างงานใหม่ผ่าน API ต้องระบุ ส่วนงานเก่าเป็นค่าว่างได้

@@ -14,7 +14,7 @@ import {
 import { th } from "date-fns/locale";
 import { CalendarDays, ChevronLeft, ChevronRight, Columns3, Plus } from "lucide-react";
 import {
-  Brand, ContentTask, Filters, PLATFORMS, PLATFORM_META, Platform, STATUSES, STATUS_META, Status,
+  Brand, CONTENT_TYPES, CONTENT_TYPE_META, ContentTask, Filters, PLATFORMS, PLATFORM_META, Platform, STATUSES, STATUS_META, Status,
 } from "@/lib/types";
 import { usePermissions } from "@/components/role-store";
 import { TaskModal } from "./TaskModal";
@@ -61,7 +61,7 @@ function usePatchTask() {
 export function ContentDashboard({ brands }: { brands: Brand[] }) {
   const [view, setView] = useState<View>("calendar");
   const [month, setMonth] = useState(() => new Date());
-  const [filters, setFilters] = useState<Filters>({ brandIds: [], statuses: [], platforms: [] });
+  const [filters, setFilters] = useState<Filters>({ brandIds: [], statuses: [], platforms: [], ctypes: [] });
   const [modal, setModal] = useState<{ open: boolean; task?: ContentTask; defaultDate?: Date }>({ open: false });
   const [dragging, setDragging] = useState<ContentTask | null>(null);
   const { can } = usePermissions();
@@ -78,7 +78,8 @@ export function ContentDashboard({ brands }: { brands: Brand[] }) {
         (t) =>
           (!filters.brandIds.length || filters.brandIds.includes(t.brandId)) &&
           (!filters.statuses.length || filters.statuses.includes(t.status)) &&
-          (!filters.platforms.length || t.platforms.some((p) => filters.platforms.includes(p)))
+          (!filters.platforms.length || t.platforms.some((p) => filters.platforms.includes(p))) &&
+          (!filters.ctypes.length || (!!t.ctype && filters.ctypes.includes(t.ctype)))
       ),
     [all, filters]
   );
@@ -194,7 +195,7 @@ function toggle<T>(arr: T[], v: T) {
 }
 
 function FilterBar({ brands, filters, onChange }: { brands: Brand[]; filters: Filters; onChange: (f: Filters) => void }) {
-  const active = filters.brandIds.length + filters.statuses.length + filters.platforms.length;
+  const active = filters.brandIds.length + filters.statuses.length + filters.platforms.length + filters.ctypes.length;
   return (
     <aside className="hidden w-56 shrink-0 space-y-5 overflow-y-auto border-r bg-white p-4 md:block">
       <FilterGroup title="แบรนด์">
@@ -221,6 +222,17 @@ function FilterBar({ brands, filters, onChange }: { brands: Brand[]; filters: Fi
         ))}
       </FilterGroup>
 
+      <FilterGroup title="ประเภทงาน">
+        {CONTENT_TYPES.map((c) => (
+          <Check
+            key={c}
+            checked={filters.ctypes.includes(c)}
+            onChange={() => onChange({ ...filters, ctypes: toggle(filters.ctypes, c) })}
+            label={CONTENT_TYPE_META[c].label}
+          />
+        ))}
+      </FilterGroup>
+
       <FilterGroup title="แพลตฟอร์ม">
         {PLATFORMS.map((p) => (
           <Check
@@ -233,7 +245,7 @@ function FilterBar({ brands, filters, onChange }: { brands: Brand[]; filters: Fi
       </FilterGroup>
 
       {active > 0 && (
-        <button className="text-sm text-rose-600 underline" onClick={() => onChange({ brandIds: [], statuses: [], platforms: [] })}>
+        <button className="text-sm text-rose-600 underline" onClick={() => onChange({ brandIds: [], statuses: [], platforms: [], ctypes: [] })}>
           ล้างตัวกรอง ({active})
         </button>
       )}
@@ -335,6 +347,7 @@ function TaskChip({ task, onOpen }: { task: ContentTask; onOpen: () => void }) {
       className={`flex w-full items-center gap-1 rounded border border-l-4 bg-white px-1.5 py-1 text-left text-xs shadow-sm hover:shadow ${isDragging ? "opacity-40" : ""}`}
     >
       <span className={`h-2 w-2 shrink-0 rounded-full ${STATUS_META[task.status].dot}`} />
+      {task.ctype && <span className={`shrink-0 rounded px-1 text-[10px] font-semibold ${CONTENT_TYPE_META[task.ctype].tag}`}>{CONTENT_TYPE_META[task.ctype].label}</span>}
       <span className="truncate">{task.title}</span>
     </button>
   );
@@ -392,6 +405,7 @@ function TaskCard({ task, overlay }: { task: ContentTask; overlay?: boolean }) {
         </div>
         <p className="font-medium leading-snug">{task.title}</p>
         <div className="flex flex-wrap gap-1">
+          {task.ctype && <span className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${CONTENT_TYPE_META[task.ctype].tag}`}>{CONTENT_TYPE_META[task.ctype].label}</span>}
           {task.platforms.map((p: Platform) => (
             <span key={p} className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-600">{PLATFORM_META[p].short}</span>
           ))}

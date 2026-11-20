@@ -209,6 +209,7 @@ body.switching .hero-switch{position:relative;z-index:70}
 .card .meta b{color:var(--accent);font-weight:600}
 .card .title{font-weight:500;line-height:1.35}
 .tags{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.ct{flex:none;font-size:10px;line-height:1.5;font-weight:700;border-radius:4px;padding:0 5px;color:var(--fg);background:color-mix(in srgb,var(--tc) 22%,var(--surface));border:1px solid color-mix(in srgb,var(--tc) 55%,transparent);white-space:nowrap}
 .tag-s{font-size:11px;background:var(--surface-2);color:var(--muted);border-radius:4px;padding:1px 6px}
 .due{font-size:11px;border-radius:4px;padding:1px 6px;font-weight:500}
 .due.warn{background:var(--s-review-bg);color:var(--s-review)}
@@ -652,6 +653,10 @@ input:disabled,select:disabled,textarea:disabled{opacity:.8;cursor:default}
           <label class="fld"><span>แบรนด์ (ล็อกตามโลกที่เลือก)</span><select id="fBrand" disabled></select></label>
           <label class="fld"><span>สถานะ (ดูจากลิงก์ TikTok)</span><output id="fState" class="statebox"></output></label>
         </div>
+        <div class="row2">
+          <label class="fld"><span>ประเภทงาน</span><select id="fCtype"></select><span class="err" id="eCtype"></span></label>
+          <div class="fld"><span>ความหมาย</span><output id="fCtDesc" class="statebox" style="font-weight:400"></output></div>
+        </div>
         <div class="fld"><span class="lbl">แพลตฟอร์มเป้าหมาย</span>
           <div class="plats" id="fPlats"></div>
           <span class="err" id="ePlats"></span></div>
@@ -703,6 +708,15 @@ var STATUSES=[
 var PLATS=[
   {id:'FB',label:'Facebook'},{id:'IG',label:'Instagram'},{id:'TT',label:'TikTok'},
   {id:'YT',label:'YouTube'},{id:'LN',label:'LINE OA'},{id:'X',label:'X'}];
+/* ประเภทงาน ตามที่ใช้ในไฟล์ Excel เดิม (Media) */
+var CTYPES=[
+  {id:'AW',label:'AW',desc:'อาร์ตเวิร์ก/ภาพนิ่ง',h:28},{id:'VDO',label:'VDO',desc:'วิดีโอ/คลิปสั้น',h:355},
+  {id:'Lifestyle',label:'Lifestyle',desc:'คอนเทนต์ไลฟ์สไตล์',h:150},{id:'Text',label:'Text',desc:'ข้อความล้วน',h:215},
+  {id:'Share',label:'Share',desc:'แชร์/รีโพสต์',h:265},{id:'Photo Album',label:'Photo Album',desc:'อัลบั้มภาพ',h:48},
+  {id:'NPD',label:'NPD',desc:'สินค้าใหม่',h:320},{id:'Delivery',label:'Delivery',desc:'เดลิเวอรี/ช่องทางสั่ง',h:190},
+  {id:'Snack Box',label:'Snack Box',desc:'สแน็กบ็อกซ์',h:85}];
+function ctype(id){return CTYPES.filter(function(c){return c.id===id})[0]}
+function ctHTML(id){var c=ctype(id);return c?'<span class="ct" style="--tc:hsl('+c.h+' 70% 50%)" title="'+esc(c.desc)+'">'+esc(c.label)+'</span>':''}
 var BRANDS={
   KS:{id:'KS',name:'Kudsan',tag:'สดใส เต็มพลัง ปล่อยคอนเทนต์ให้ปัง',
       ranks:['พร้อมออกสตาร์ต','ติดเครื่องแล้ว','กำลังพุ่ง','ใกล้เส้นชัย','ครบทุกภารกิจ']},
@@ -711,7 +725,7 @@ var BRANDS={
 var MONTHS=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 var MSHORT=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 var DOW=['อา','จ','อ','พ','พฤ','ศ','ส'];
-var KEY='content-calendar-v4',BKEY='content-calendar-brand';
+var KEY='content-calendar-v5',BKEY='content-calendar-brand';
 
 function $(s,r){return (r||document).querySelector(s)}
 function $$(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))}
@@ -751,12 +765,13 @@ var tasks=[];
 var now=new Date();
 var cur={y:now.getFullYear(),m:now.getMonth()};
 var view='calendar';
-var FS={KS:{statuses:{},plats:{}},BL:{statuses:{},plats:{}}};   // ตัวกรองแยกตามโลก
+var FS={KS:{statuses:{},plats:{},ctypes:{}},BL:{statuses:{},plats:{},ctypes:{}}};   // ตัวกรองแยกตามโลก
 var curBrand='KS';
 function getF(){return FS[curBrand]}
 function brandFromHash(){var h=(location.hash||'').replace('#','').toLowerCase();return h==='bl'?'BL':h==='ks'?'KS':null}
 function storedBrand(){try{var b=localStorage.getItem(BKEY);return b==='BL'||b==='KS'?b:null}catch(e){return null}}
 
+var SEED_CT=['VDO','AW','Lifestyle','VDO','Text','NPD','Share','VDO','Photo Album','AW','Delivery','Snack Box'];
 function seed(){
   var y=now.getFullYear(),m=now.getMonth(),dim=new Date(y,m+1,0).getDate();
   function D(d,t){return y+'-'+pad(m+1)+'-'+pad(Math.min(d,dim))+'T'+t}
@@ -780,7 +795,7 @@ function seed(){
     ['มินิเกมชิงรางวัลประจำสัปดาห์','KS',['IG','TT'],13,'19:00','APPROVED']
   ];
   return rows.map(function(r,i){
-    var t={id:uid()+i,title:r[0],brand:r[1],platforms:r[2],publishDate:D(r[3],r[4]),
+    var t={id:uid()+i,title:r[0],brand:r[1],ctype:SEED_CT[i%SEED_CT.length],platforms:r[2],publishDate:D(r[3],r[4]),
       status:'DRAFT',
       caption:'ตัวอย่างแคปชั่นสำหรับ "'+r[0]+'"\n\n#'+(r[1]==='KS'?'Kudsan':'Bellinees')+' #ContentPlan',
       attachments:[]};
@@ -807,11 +822,12 @@ function save(){
 /* ---------- content isolation: ทุกการอ่านผ่าน brandTasks() ---------- */
 function inMonth(t){return t.publishDate.slice(0,7)===cur.y+'-'+pad(cur.m+1)}
 function brandMonth(){return tasks.filter(function(t){return t.brand===curBrand&&inMonth(t)})}
-function activeCount(){var f=getF();return Object.keys(f.statuses).length+Object.keys(f.plats).length}
+function activeCount(){var f=getF();return Object.keys(f.statuses).length+Object.keys(f.plats).length+Object.keys(f.ctypes).length}
 function monthTasks(){
   var f=getF();
   return brandMonth().filter(function(t){
-    return !Object.keys(f.plats).length||t.platforms.some(function(p){return f.plats[p]});
+    return (!Object.keys(f.plats).length||t.platforms.some(function(p){return f.plats[p]}))&&
+           (!Object.keys(f.ctypes).length||!!f.ctypes[t.ctype]);
   });
 }
 function visible(){var f=getF();return monthTasks().filter(function(t){return !Object.keys(f.statuses).length||f.statuses[t.status]})}
@@ -821,6 +837,8 @@ function buildFilters(){
   var h='';
   h+='<div class="fgroup"><h3>สถานะ</h3>'+STATUSES.map(function(s){
     return '<label><input type="checkbox" data-k="statuses" data-id="'+s.id+'"><span class="dot" style="--c:var('+s.c+')"></span>'+s.label+'</label>'}).join('')+'</div>';
+  h+='<div class="fgroup"><h3>ประเภทงาน</h3>'+CTYPES.map(function(c){
+    return '<label><input type="checkbox" data-k="ctypes" data-id="'+c.id+'">'+ctHTML(c.id)+'</label>'}).join('')+'</div>';
   h+='<div class="fgroup"><h3>แพลตฟอร์ม</h3>'+PLATS.map(function(p){
     return '<label><input type="checkbox" data-k="plats" data-id="'+p.id+'">'+p.label+'</label>'}).join('')+'</div>';
   h+='<button class="clear" id="clearF" hidden>ล้างตัวกรอง</button>';
@@ -853,8 +871,8 @@ function updateQuest(){}
 /* ---------- render views ---------- */
 function chipHTML(t){
   var s=stat(t.status);
-  return '<button type="button" class="chip" draggable="'+(isMgr()?'true':'false')+'" data-id="'+t.id+'" style="--sc:var('+s.c+')" title="'+esc(t.title)+' · '+s.label+'">'+
-    '<span class="sd"></span><span class="t">'+esc(t.title)+'</span>'+'</button>';
+  return '<button type="button" class="chip" draggable="'+(isMgr()?'true':'false')+'" data-id="'+t.id+'" style="--sc:var('+s.c+')" title="'+esc(t.title)+(ctype(t.ctype)?' · '+ctype(t.ctype).label:'')+' · '+s.label+'">'+
+    '<span class="sd"></span>'+ctHTML(t.ctype)+'<span class="t">'+esc(t.title)+'</span>'+'</button>';
 }
 function cardHTML(t){
   var img=(t.attachments||[]).filter(function(a){return a.kind==='IMAGE'})[0];
@@ -862,7 +880,7 @@ function cardHTML(t){
     (img?'<img src="'+esc(img.url)+'" alt="">':'')+
     '<div class="cb"><div class="meta"><b>'+t.brand+'</b><span class="num">'+fmtDay(t.publishDate)+' '+t.publishDate.slice(11,16)+'</span></div>'+
     '<div class="title">'+esc(t.title)+'</div>'+
-    '<div class="tags">'+t.platforms.map(function(p){return '<span class="tag-s">'+p+'</span>'}).join('')+
+    '<div class="tags">'+ctHTML(t.ctype)+t.platforms.map(function(p){return '<span class="tag-s">'+p+'</span>'}).join('')+
     (t.status==='POSTED'?'<span class="due ok">ลง TikTok แล้ว</span>':'')+
     ((t.attachments||[]).length?'<span class="clip num">ไฟล์ '+t.attachments.length+'</span>':'')+
     '</div></div></div>';
@@ -1464,7 +1482,7 @@ $('#filters').addEventListener('change',function(e){
   render();
 });
 $('#filters').addEventListener('click',function(e){
-  if(e.target.id==='clearF'){FS[curBrand]={statuses:{},plats:{}};render()}
+  if(e.target.id==='clearF'){FS[curBrand]={statuses:{},plats:{},ctypes:{}};render()}
 });
 $('#summary').addEventListener('click',function(e){
   var b=e.target.closest('[data-st]');if(!b)return;
@@ -1486,10 +1504,11 @@ $('#resetDemo').onclick=function(){if(!isMgr())return;tasks=seed();save();render
 var dlg=$('#dlg'),editing=null,draft=null;
 function fillSelects(){
   $('#fBrand').innerHTML=Object.keys(BRANDS).map(function(k){return '<option value="'+k+'">'+esc(BRANDS[k].name)+' ('+k+')</option>'}).join('');
+  $('#fCtype').innerHTML='<option value="">เลือกประเภทงาน</option>'+CTYPES.map(function(c){return '<option value="'+c.id+'">'+c.label+'</option>'}).join('');
   $('#fPlats').innerHTML=PLATS.map(function(p){return '<label><input type="checkbox" value="'+p.id+'"><span>'+p.label+'</span></label>'}).join('');
 }
 function setFormEnabled(on){
-  ['fTitle','fPub','fCaption'].forEach(function(k){$('#'+k).disabled=!on});
+  ['fTitle','fCtype','fPub','fCaption'].forEach(function(k){$('#'+k).disabled=!on});
   $$('#fPlats input').forEach(function(i){i.disabled=!on});
 }
 function openModal(id,date){
@@ -1503,10 +1522,11 @@ function openModal(id,date){
   $('#fBrand').value=curBrand;
   $('#fState').textContent=t&&t.status==='POSTED'?'ลง TikTok แล้ว ✓':'ยังไม่ลง TikTok';
   $$('#fPlats input').forEach(function(i){i.checked=!!t&&t.platforms.indexOf(i.value)>-1});
+  $('#fCtype').value=t&&t.ctype?t.ctype:'';syncCt();
   $('#fPub').value=t?t.publishDate:base;
   $('#fCaption').value=t?(t.caption||''):'';
   draft=(t?t.attachments:[]).slice();
-  ['eTitle','ePlats','ePub','eFile'].forEach(function(k){$('#'+k).textContent=''});
+  ['eTitle','eCtype','ePlats','ePub','eFile'].forEach(function(k){$('#'+k).textContent=''});
   setFormEnabled(mgr);
   $('#saveBtn').hidden=!mgr;
   $('#cancelBtn').textContent=mgr?'ยกเลิก':'ปิด';
@@ -1515,6 +1535,8 @@ function openModal(id,date){
   if(!dlg.open)dlg.showModal();
   if(mgr)$('#fTitle').focus();
 }
+function syncCt(){var c=ctype($('#fCtype').value);$('#fCtDesc').textContent=c?c.desc:'–'}
+$('#fCtype').addEventListener('change',syncCt);
 function closeModal(){if(dlg.open)dlg.close()}
 function syncCount(){$('#cCount').textContent=$('#fCaption').value.length.toLocaleString('th-TH')+' ตัวอักษร'}
 /* Admin ลบได้ทุกไฟล์  ฝั่งดูตารางลบได้เฉพาะลิงก์ TikTok */
@@ -1708,10 +1730,11 @@ $('#form').addEventListener('submit',function(e){
   var title=$('#fTitle').value.trim(),plats=$$('#fPlats input:checked').map(function(i){return i.value}),pub=$('#fPub').value;
   var ok=true;
   $('#eTitle').textContent=title?'':'กรุณาใส่หัวข้อคอนเทนต์';if(!title)ok=false;
+  var ct=$('#fCtype').value;$('#eCtype').textContent=ct?'':'เลือกประเภทงาน';if(!ct)ok=false;
   $('#ePlats').textContent=plats.length?'':'เลือกอย่างน้อย 1 แพลตฟอร์ม';if(!plats.length)ok=false;
   $('#ePub').textContent=pub?'':'เลือกวัน-เวลาที่จะโพสต์';if(!pub)ok=false;
   if(!ok)return;
-  var data={title:title,brand:curBrand,platforms:plats,publishDate:pub,caption:$('#fCaption').value,attachments:draft.slice()};
+  var data={title:title,brand:curBrand,ctype:ct,platforms:plats,publishDate:pub,caption:$('#fCaption').value,attachments:draft.slice()};
   var wasEdit=!!editing;
   if(editing){
     Object.assign(editing,data);

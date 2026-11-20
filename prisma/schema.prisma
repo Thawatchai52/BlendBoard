@@ -18,6 +18,19 @@ enum ContentStatus {
   POSTED       // Posted
 }
 
+/// ประเภทงาน (คอลัมน์ Media ในไฟล์ Excel เดิม)
+enum ContentType {
+  AW           // อาร์ตเวิร์ก/ภาพนิ่ง
+  VDO          // วิดีโอ/คลิปสั้น
+  LIFESTYLE
+  TEXT
+  SHARE
+  PHOTO_ALBUM
+  NPD          // สินค้าใหม่
+  DELIVERY
+  SNACK_BOX
+}
+
 enum Platform {
   FACEBOOK
   INSTAGRAM
@@ -59,6 +72,7 @@ model ContentTask {
   caption     String?       @db.Text // Caption / Copywriting
   status      ContentStatus @default(DRAFT)
   platforms   Platform[]    // ลงได้หลายแพลตฟอร์ม
+  ctype       ContentType?  // ประเภทงาน (AW/VDO/...) ว่างได้สำหรับงานเก่า/ที่นำเข้า  สร้างใหม่ผ่าน API ต้องระบุ
   publishDate DateTime      // วัน-เวลาที่จะโพสต์ (ใช้แสดงในปฏิทิน)
   briefDueAt  DateTime?     // กำหนดส่งบรีฟ/งานดีไซน์ (ใช้เตือน)
   position    Int           @default(0) // ลำดับในคอลัมน์ Kanban
