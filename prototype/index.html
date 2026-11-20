@@ -772,8 +772,7 @@ var STATUSES=[
   {id:'DRAFT',label:'ยังไม่ลง TikTok',c:'--s-draft',b:'--s-draft-bg'},
   {id:'POSTED',label:'ลง TikTok แล้ว',c:'--s-posted',b:'--s-posted-bg'}];
 var PLATS=[
-  {id:'FB',label:'Facebook'},{id:'IG',label:'Instagram'},{id:'TT',label:'TikTok'},
-  {id:'YT',label:'YouTube'},{id:'LN',label:'LINE OA'},{id:'X',label:'X'}];
+  {id:'FB',label:'Facebook'},{id:'IG',label:'Instagram'},{id:'TT',label:'TikTok'}];
 /* ประเภทงาน ตามที่ใช้ในไฟล์ Excel เดิม (Media) */
 var CTYPES=[
   {id:'AW',label:'AW',desc:'อาร์ตเวิร์ก/ภาพนิ่ง',h:28},{id:'VDO',label:'VDO',desc:'วิดีโอ/คลิปสั้น',h:355},
@@ -846,17 +845,17 @@ function seed(){
     ['โปรโมชันปลายปี: ทีเซอร์','KS',['FB','IG'],2,'10:00','POSTED'],
     ['เปิดตัวสินค้าใหม่ Bellinee\'s','BL',['IG','TT'],4,'18:00','POSTED'],
     ['รีวิวจากลูกค้า EP.1','KS',['FB','TT'],6,'12:00','POSTED'],
-    ['Behind the scene ถ่ายแบบ','BL',['IG','TT','YT'],9,'19:00','APPROVED'],
-    ['สรุปยอด Flash Sale 11.11','KS',['FB','LN'],11,'11:00','POSTED'],
+    ['Behind the scene ถ่ายแบบ','BL',['IG','TT'],9,'19:00','APPROVED'],
+    ['สรุปยอด Flash Sale 11.11','KS',['FB'],11,'11:00','POSTED'],
     ['ไอเดียแต่งตัวรับอากาศเย็น','BL',['IG','FB'],13,'17:30','REVISION'],
-    ['ขั้นตอนการใช้งานสินค้า (Reel)','KS',['TT','IG','YT'],16,'12:00','IN_REVIEW'],
-    ['คอลเลกชันพิเศษ Black Friday','BL',['FB','IG','LN'],18,'09:00','IN_REVIEW'],
-    ['Black Friday: ประกาศโปรโมชัน','KS',['FB','IG','TT','LN'],20,'09:00','DRAFT'],
+    ['ขั้นตอนการใช้งานสินค้า (Reel)','KS',['TT','IG'],16,'12:00','IN_REVIEW'],
+    ['คอลเลกชันพิเศษ Black Friday','BL',['FB','IG'],18,'09:00','IN_REVIEW'],
+    ['Black Friday: ประกาศโปรโมชัน','KS',['FB','IG','TT'],20,'09:00','DRAFT'],
     ['Q&A ตอบคำถามลูกค้า','BL',['IG'],23,'20:00','DRAFT'],
     ['ของขวัญปีใหม่ แนะนำ 5 ชิ้น','KS',['FB','IG'],25,'10:00','DRAFT'],
-    ['Countdown ส่งท้ายปี','BL',['IG','TT','X'],27,'21:00','DRAFT'],
-    ['สรุปปีและขอบคุณลูกค้า','KS',['FB','YT'],29,'18:00','DRAFT'],
-    ['เบื้องหลังงานฝีมือ Bellinee\'s','BL',['IG','YT'],6,'20:00','POSTED'],
+    ['Countdown ส่งท้ายปี','BL',['IG','TT'],27,'21:00','DRAFT'],
+    ['สรุปปีและขอบคุณลูกค้า','KS',['FB'],29,'18:00','DRAFT'],
+    ['เบื้องหลังงานฝีมือ Bellinee\'s','BL',['IG'],6,'20:00','POSTED'],
     ['ของขวัญพรีเมียมสำหรับคนพิเศษ','BL',['FB','IG'],30,'10:00','DRAFT'],
     ['มินิเกมชิงรางวัลประจำสัปดาห์','KS',['IG','TT'],13,'19:00','APPROVED']
   ];
@@ -871,7 +870,7 @@ function seed(){
   });
 }
 function load(){
-  try{var raw=localStorage.getItem(KEY);if(raw){var d=JSON.parse(raw);if(d&&Array.isArray(d.tasks)){tasks=d.tasks;return}}}catch(e){}
+  try{var raw=localStorage.getItem(KEY);if(raw){var d=JSON.parse(raw);if(d&&Array.isArray(d.tasks)){tasks=d.tasks;tasks.forEach(function(t){if(Array.isArray(t.platforms))t.platforms=t.platforms.filter(function(x){return x==='FB'||x==='IG'||x==='TT'})});return}}}catch(e){}
   tasks=seed();
 }
 var toastTimer;
