@@ -1,54 +1,56 @@
 <title>Content Calendar</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Noto+Serif+Thai:wght@500;600&family=Prompt:wght@500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mali:wght@500;600;700&family=Noto+Sans+Thai+Looped:wght@400;500;600&display=swap">
 <style>
 /* Layout: แถบ Hero ของ "โลก" แบรนด์ (สวิตช์ + ภารกิจประจำเดือน) → แถบเครื่องมือ → สรุปสถานะ → ตัวกรอง + ปฏิทิน/Kanban
    Theme: ทุกสีเป็น token; data-brand บน :root สลับชุดสี KS(ส้ม) / BL(น้ำตาล) และ light-dark() จัดการโหมดสว่าง/มืด */
 :root{
   color-scheme:light;
-  --bg:light-dark(#FFF6EC,#1C110A);
-  --surface:light-dark(#FFFFFF,#2A1A0F);
-  --surface-2:light-dark(#FFE9D2,#3A2415);
-  --line:light-dark(#F4D2AE,#56391F);
-  --fg:light-dark(#2B1708,#FFEBD6);
-  --muted:light-dark(#7A4F2A,#D2A77C);
-  --accent:light-dark(#D9480F,#FF922B);
-  --on-accent:light-dark(#FFFFFF,#1C110A);
-  --brand:light-dark(#F76707,#FF922B);
-  --hero-a:light-dark(#FFB347,#B93A0B);
-  --hero-b:light-dark(#FF7A1A,#7A2A0A);
-  --hero-fg:light-dark(#2B1708,#FFEBD6);
-  --r:14px;
-  --f-head:'Prompt','IBM Plex Sans Thai',system-ui,sans-serif;
-  --f-body:'IBM Plex Sans Thai',system-ui,-apple-system,'Segoe UI',sans-serif;
-  --shadow:0 1px 2px rgba(20,10,0,.12);
-  --s-draft:light-dark(#5F6877,#B9B2AA);   --s-draft-bg:light-dark(#EFEAE5,#3A2B20);
-  --s-review:light-dark(#8F5B00,#F2C14E);  --s-review-bg:light-dark(#FCF1D3,#3F3214);
-  --s-revision:light-dark(#B42323,#FF8A8A);--s-revision-bg:light-dark(#FCE4E4,#43201F);
-  --s-approved:light-dark(#23773A,#6FD08C);--s-approved-bg:light-dark(#E0F4E6,#17341F);
-  --s-posted:light-dark(#1565B8,#74B3F5);  --s-posted-bg:light-dark(#E0EEFC,#15283F);
+  --bg:light-dark(#FFF4E4,#241610);
+  --surface:light-dark(#FFFFFF,#33201A);
+  --surface-2:light-dark(#FFE6C7,#46291E);
+  --line:light-dark(#FFD3A0,#68402A);
+  --fg:light-dark(#3A1F0C,#FFEBD9);
+  --muted:light-dark(#86542E,#E3B58C);
+  --accent:light-dark(#E8590C,#FFA24D);
+  --on-accent:light-dark(#FFFFFF,#2A1208);
+  --brand:light-dark(#FF8A1F,#FFA24D);
+  --hero-a:light-dark(#FFD66B,#C2480F);
+  --hero-b:light-dark(#FF9A4A,#8A2E0C);
+  --hero-fg:light-dark(#4A230A,#FFEBD9);
+  --dot:light-dark(rgba(255,150,50,.16),rgba(255,170,90,.07));
+  --r:20px;
+  --f-head:'Mali','Noto Sans Thai Looped',system-ui,sans-serif;
+  --f-body:'Noto Sans Thai Looped',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --shadow:0 3px 10px light-dark(rgba(255,130,40,.2),rgba(0,0,0,.35));
+  --s-draft:light-dark(#6B6475,#C9C0D6);   --s-draft-bg:light-dark(#F1EBF7,#3A3045);
+  --s-review:light-dark(#8F5B00,#F2C14E);  --s-review-bg:light-dark(#FFF0C2,#3F3214);
+  --s-revision:light-dark(#C0264A,#FF9AB0);--s-revision-bg:light-dark(#FFE1E8,#47202B);
+  --s-approved:light-dark(#1F8040,#7EDB9A);--s-approved-bg:light-dark(#DDF6E4,#17341F);
+  --s-posted:light-dark(#1B6BC4,#82BCF8);  --s-posted-bg:light-dark(#DDEEFF,#15283F);
 }
 :root[data-brand="BL"]{
-  --bg:light-dark(#F4EDE6,#1A120D);
-  --surface:light-dark(#FFFCF9,#241913);
-  --surface-2:light-dark(#E9DDD1,#31231A);
-  --line:light-dark(#D3BFAE,#4A3728);
-  --fg:light-dark(#2A1D15,#F3E6D8);
-  --muted:light-dark(#6B5242,#BBA48F);
-  --accent:light-dark(#6F4A32,#D2A679);
-  --on-accent:light-dark(#FFF8F1,#1A120D);
-  --brand:light-dark(#8B5E3C,#D2A679);
-  --hero-a:light-dark(#7B5238,#3A2619);
-  --hero-b:light-dark(#4A2F20,#231610);
-  --hero-fg:light-dark(#FFF3E6,#F3E6D8);
-  --r:6px;
-  --f-head:'Noto Serif Thai','Prompt',Georgia,serif;
+  --bg:light-dark(#FBEFE7,#231813);
+  --surface:light-dark(#FFFDFB,#31221B);
+  --surface-2:light-dark(#F5DFD0,#443024);
+  --line:light-dark(#EBCDB8,#5E4332);
+  --fg:light-dark(#3D2518,#F8E9DC);
+  --muted:light-dark(#7C5642,#D6B8A0);
+  --accent:light-dark(#A5603C,#E3A67C);
+  --on-accent:light-dark(#FFFFFF,#2A170E);
+  --brand:light-dark(#C98B63,#E3A67C);
+  --hero-a:light-dark(#F0C6A3,#8E5A3C);
+  --hero-b:light-dark(#CE8F68,#5E3A27);
+  --hero-fg:light-dark(#42261A,#F8E9DC);
+  --dot:light-dark(rgba(190,120,80,.15),rgba(230,170,130,.07));
+  --r:20px;
+  --f-head:'Mali','Noto Sans Thai Looped',system-ui,sans-serif;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){color-scheme:dark}}
 :root[data-theme="dark"]{color-scheme:dark}
 
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px;line-height:1.5;
+body{background:var(--bg) radial-gradient(circle,var(--dot) 1.6px,transparent 2px) 0 0/22px 22px;color:var(--fg);font-family:var(--f-body);font-size:14px;line-height:1.5;
   padding-block:16px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
@@ -89,7 +91,7 @@ button{cursor:pointer}
 .bswitch[data-brand="BL"] .bs-spark.ks{opacity:0;transform:translateX(24px)}
 .bswitch[data-brand="BL"] .bs-spark.bl{opacity:1;transform:none}
 .bs-name{position:absolute;top:0;bottom:0;display:flex;flex-direction:column;justify-content:center;pointer-events:none;transition:opacity .4s ease,transform .6s cubic-bezier(.34,1.4,.64,1)}
-.bs-name b{font-family:'Prompt',sans-serif;font-weight:600;font-size:19px;letter-spacing:.07em;line-height:1.1}
+.bs-name b{font-family:var(--f-head);font-weight:600;font-size:19px;letter-spacing:.07em;line-height:1.1}
 .bs-name small{font-size:11px;font-weight:500}
 .bs-name.ks{left:82px;color:#2B1708}
 .bs-name.bl{right:82px;text-align:right;color:#FFF3E6;opacity:0;transform:translateX(-18px)}
@@ -349,7 +351,7 @@ input:disabled,select:disabled,textarea:disabled{opacity:.8;cursor:default}
 .wipe{position:fixed;inset:0;z-index:60;display:grid;place-content:center;text-align:center;gap:4px}
 .wipe[data-b="KS"]{background:#FF7A1A;color:#2B1708}
 .wipe[data-b="BL"]{background:#3A2417;color:#F3E6D8}
-.wipe span{font-family:'Prompt',sans-serif;font-weight:600;font-size:clamp(34px,9vw,76px);letter-spacing:.04em;line-height:1.1}
+.wipe span{font-family:var(--f-head);font-weight:600;font-size:clamp(34px,9vw,76px);letter-spacing:.04em;line-height:1.1}
 .wipe small{font-size:15px;letter-spacing:.12em;text-transform:uppercase;font-weight:600}
 .confetti{position:fixed;width:8px;height:12px;border-radius:2px;z-index:80;pointer-events:none}
 
@@ -479,6 +481,28 @@ input:disabled,select:disabled,textarea:disabled{opacity:.8;cursor:default}
 .tt-task:hover{color:var(--accent);text-decoration:underline}
 .tt-clip a{font-weight:500;font-size:12px;color:var(--muted)}
 .tt-brandtag{display:none}
+
+/* ---------- ธีมน่ารัก: มนขึ้น นุ่มขึ้น เด้งดึ๋งเวลาแตะ ---------- */
+.hero{border-radius:32px;box-shadow:0 8px 22px light-dark(rgba(255,140,50,.28),rgba(0,0,0,.4))}
+:root[data-brand="BL"] .hero{box-shadow:0 8px 22px light-dark(rgba(170,100,60,.28),rgba(0,0,0,.4))}
+.hero::after{content:"";position:absolute;right:-30px;bottom:-46px;width:150px;height:150px;border-radius:50%;background:rgba(255,255,255,.22);pointer-events:none}
+.hero h1{letter-spacing:.01em}
+.btn,.iconbtn,.seg button,.stat,.chip,.card{transition:transform .18s cubic-bezier(.3,1.6,.5,1),background-color .18s,box-shadow .18s}
+.btn,.iconbtn{border-radius:99px}
+.btn.primary{box-shadow:0 3px 0 color-mix(in srgb,var(--accent) 60%,#000)}
+.btn.primary:active{transform:translateY(2px);box-shadow:0 1px 0 color-mix(in srgb,var(--accent) 60%,#000)}
+.btn:hover,.iconbtn:hover{transform:translateY(-1px)}
+.seg{border-radius:99px}.seg button{border-radius:99px}
+.stat{box-shadow:var(--shadow)}.stat:hover{transform:translateY(-2px) rotate(-.4deg)}
+.card{box-shadow:var(--shadow)}.card:hover{transform:translateY(-3px) rotate(.3deg)}
+.chip{border-radius:99px}.chip:hover{transform:scale(1.03)}
+.filters,.tr-box,.sk-card,.tr-card,.demo{box-shadow:var(--shadow)}
+.sk-card:hover,.tr-card:hover{transform:translateY(-2px)}
+.sk-card,.tr-card{transition:transform .18s cubic-bezier(.3,1.6,.5,1)}
+dialog{border-radius:28px}
+input[type=text],input[type=url],input[type=number],input[type=datetime-local],select,textarea{border-radius:14px}
+.fgroup h3::before{content:"✿ ";color:var(--brand)}
+@media (prefers-reduced-motion:reduce){.btn,.iconbtn,.seg button,.stat,.chip,.card,.sk-card,.tr-card{transition:none}.stat:hover,.card:hover,.chip:hover,.btn:hover{transform:none}}
 </style>
 
 <section class="landing" id="landing" aria-labelledby="lTitle">
