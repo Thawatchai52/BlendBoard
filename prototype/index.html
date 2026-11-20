@@ -412,6 +412,7 @@ input:disabled,select:disabled,textarea:disabled{opacity:.8;cursor:default}
 .tr-form input,.tr-form select,.tr-form textarea{width:100%;box-sizing:border-box}
 .tr-prev{width:64px;height:80px;border-radius:8px;object-fit:cover;border:1px solid var(--line);background:var(--surface-2)}
 .tr-mine{position:absolute;left:8px;bottom:8px;background:var(--accent);color:var(--on-accent);border-radius:99px;padding:2px 10px;font-size:12px}
+.own{font-size:12px;color:var(--muted);margin-top:2px;overflow-wrap:anywhere}
 .sk-head h2{margin:0;font-family:var(--f-head);font-size:22px}
 .sk-head p{margin:4px 0 0;font-size:13px;color:var(--muted)}
 .sk-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
@@ -688,6 +689,8 @@ input:disabled,select:disabled,textarea:disabled{opacity:.8;cursor:default}
         <label class="fld"><span>หัวข้อคอนเทนต์</span>
           <input type="text" id="fTitle" placeholder="เช่น โปรโมชันปลายปี: ทีเซอร์" maxlength="150">
           <span class="err" id="eTitle"></span></label>
+        <label class="fld"><span>ผู้รับผิดชอบ (พิมพ์ชื่อเอง)</span>
+          <input type="text" id="fOwner" placeholder="เช่น พี่มิ้นท์" maxlength="60" autocomplete="off"></label>
         <div class="row2">
           <label class="fld"><span>แบรนด์ (ล็อกตามโลกที่เลือก)</span><select id="fBrand" disabled></select></label>
           <label class="fld"><span>สถานะ (ดูจากลิงก์ TikTok)</span><output id="fState" class="statebox"></output></label>
@@ -804,7 +807,7 @@ var tasks=[];
 var now=new Date();
 var cur={y:now.getFullYear(),m:now.getMonth()};
 var view='calendar';
-var FS={KS:{statuses:{},plats:{},ctypes:{}},BL:{statuses:{},plats:{},ctypes:{}}};   // ตัวกรองแยกตามโลก
+var FS={KS:{statuses:{},plats:{},ctypes:{},owner:''},BL:{statuses:{},plats:{},ctypes:{},owner:''}};   // ตัวกรองแยกตามโลก
 var curBrand='KS';
 function getF(){return FS[curBrand]}
 function brandFromHash(){var h=(location.hash||'').replace('#','').toLowerCase();return h==='bl'?'BL':h==='ks'?'KS':null}
@@ -861,12 +864,13 @@ function save(){
 /* ---------- content isolation: ทุกการอ่านผ่าน brandTasks() ---------- */
 function inMonth(t){return t.publishDate.slice(0,7)===cur.y+'-'+pad(cur.m+1)}
 function brandMonth(){return tasks.filter(function(t){return t.brand===curBrand&&inMonth(t)})}
-function activeCount(){var f=getF();return Object.keys(f.statuses).length+Object.keys(f.plats).length+Object.keys(f.ctypes).length}
+function activeCount(){var f=getF();return Object.keys(f.statuses).length+Object.keys(f.plats).length+Object.keys(f.ctypes).length+(f.owner?1:0)}
 function monthTasks(){
   var f=getF();
   return brandMonth().filter(function(t){
     return (!Object.keys(f.plats).length||t.platforms.some(function(p){return f.plats[p]}))&&
-           (!Object.keys(f.ctypes).length||!!f.ctypes[t.ctype]);
+           (!Object.keys(f.ctypes).length||!!f.ctypes[t.ctype])&&
+           (!f.owner||(t.owner||'').toLowerCase().indexOf(f.owner.toLowerCase())>-1);
   });
 }
 function visible(){var f=getF();return monthTasks().filter(function(t){return !Object.keys(f.statuses).length||f.statuses[t.status]})}
@@ -880,6 +884,7 @@ function buildFilters(){
     return '<label><input type="checkbox" data-k="ctypes" data-id="'+c.id+'">'+ctHTML(c.id)+'</label>'}).join('')+'</div>';
   h+='<div class="fgroup"><h3>แพลตฟอร์ม</h3>'+PLATS.map(function(p){
     return '<label><input type="checkbox" data-k="plats" data-id="'+p.id+'">'+p.label+'</label>'}).join('')+'</div>';
+  h+='<div class="fgroup"><h3>ผู้รับผิดชอบ</h3><input type="text" id="fOwnerQ" maxlength="60" placeholder="พิมพ์ชื่อเพื่อกรอง" aria-label="กรองตามผู้รับผิดชอบ"></div>';
   h+='<button class="clear" id="clearF" hidden>ล้างตัวกรอง</button>';
   $('#filters').innerHTML=h;
 }
@@ -891,6 +896,7 @@ function buildSummary(){
 function syncFilterUI(){
   var f=getF();
   $$('#filters input').forEach(function(i){if(!i.dataset.k)return;i.checked=!!f[i.dataset.k][i.dataset.id]});
+  var oq=$('#fOwnerQ');if(oq&&oq.value!==(f.owner||''))oq.value=f.owner||'';
   $('#clearF').hidden=activeCount()===0;
   var n=activeCount();
   $('#ftoggle').textContent='ตัวกรอง'+(n?' ('+n+')':'');
@@ -910,7 +916,7 @@ function updateQuest(){}
 /* ---------- render views ---------- */
 function chipHTML(t){
   var s=stat(t.status);
-  return '<button type="button" class="chip" draggable="'+(isMgr()?'true':'false')+'" data-id="'+t.id+'" style="--sc:var('+s.c+')" title="'+esc(t.title)+(ctype(t.ctype)?' · '+ctype(t.ctype).label:'')+' · '+s.label+'">'+
+  return '<button type="button" class="chip" draggable="'+(isMgr()?'true':'false')+'" data-id="'+t.id+'" style="--sc:var('+s.c+')" title="'+esc(t.title)+(ctype(t.ctype)?' · '+ctype(t.ctype).label:'')+(t.owner?' · 👤 '+esc(t.owner):'')+' · '+s.label+'">'+
     '<span class="sd"></span>'+ctHTML(t.ctype)+'<span class="t">'+esc(t.title)+'</span>'+'</button>';
 }
 function cardHTML(t){
@@ -918,7 +924,7 @@ function cardHTML(t){
   return '<div class="card" tabindex="0" role="button" draggable="'+(isMgr()?'true':'false')+'" data-id="'+t.id+'">'+
     (img?'<img src="'+esc(img.url)+'" alt="">':'')+
     '<div class="cb"><div class="meta"><b>'+t.brand+'</b><span class="num">'+fmtDay(t.publishDate)+' '+t.publishDate.slice(11,16)+'</span></div>'+
-    '<div class="title">'+esc(t.title)+'</div>'+
+    '<div class="title">'+esc(t.title)+'</div>'+(t.owner?'<div class="own">👤 '+esc(t.owner)+'</div>':'')+
     '<div class="tags">'+ctHTML(t.ctype)+t.platforms.map(function(p){return '<span class="tag-s">'+p+'</span>'}).join('')+
     (t.status==='POSTED'?'<span class="due ok">ลง TikTok แล้ว</span>':'')+
     ((t.attachments||[]).length?'<span class="clip num">ไฟล์ '+t.attachments.length+'</span>':'')+
@@ -1412,6 +1418,7 @@ $('#sk').addEventListener('click',function(e){
 $('#skFilt').addEventListener('change',function(){sk.ct=this.value;renderSK()});
 skLoad();
 
+$('#filters').addEventListener('input',function(e){if(e.target.id==='fOwnerQ'){getF().owner=e.target.value.trim();render()}});
 /* ---------- ปรับ UI ตามสิทธิ์ของประตูที่เลือก ---------- */
 function applyRole(){
   var mgr=isMgr();
@@ -1583,7 +1590,7 @@ $('#filters').addEventListener('change',function(e){
   render();
 });
 $('#filters').addEventListener('click',function(e){
-  if(e.target.id==='clearF'){FS[curBrand]={statuses:{},plats:{},ctypes:{}};render()}
+  if(e.target.id==='clearF'){FS[curBrand]={statuses:{},plats:{},ctypes:{},owner:''};syncFilterUI();render()}
 });
 $('#summary').addEventListener('click',function(e){
   var b=e.target.closest('[data-st]');if(!b)return;
@@ -1609,7 +1616,7 @@ function fillSelects(){
   $('#fPlats').innerHTML=PLATS.map(function(p){return '<label><input type="checkbox" value="'+p.id+'"><span>'+p.label+'</span></label>'}).join('');
 }
 function setFormEnabled(on){
-  ['fTitle','fCtype','fPub','fCaption'].forEach(function(k){$('#'+k).disabled=!on});
+  ['fTitle','fOwner','fCtype','fPub','fCaption'].forEach(function(k){$('#'+k).disabled=!on});
   $$('#fPlats input').forEach(function(i){i.disabled=!on});
 }
 function openModal(id,date){
@@ -1620,6 +1627,7 @@ function openModal(id,date){
   var base=date?date+'T10:00':(cur.y===now.getFullYear()&&cur.m===now.getMonth()?ymd(now):cur.y+'-'+pad(cur.m+1)+'-01')+'T10:00';
   $('#dlgTitle').textContent=mgr?(t?'แก้ไขคอนเทนต์':'สร้างคอนเทนต์ใหม่'):'รายละเอียดบรีฟ';
   $('#fTitle').value=t?t.title:'';
+  $('#fOwner').value=t?(t.owner||''):'';
   $('#fBrand').value=curBrand;
   $('#fState').textContent=t&&t.status==='POSTED'?'ลง TikTok แล้ว ✓':'ยังไม่ลง TikTok';
   $$('#fPlats input').forEach(function(i){i.checked=!!t&&t.platforms.indexOf(i.value)>-1});
@@ -1835,7 +1843,7 @@ $('#form').addEventListener('submit',function(e){
   $('#ePlats').textContent=plats.length?'':'เลือกอย่างน้อย 1 แพลตฟอร์ม';if(!plats.length)ok=false;
   $('#ePub').textContent=pub?'':'เลือกวัน-เวลาที่จะโพสต์';if(!pub)ok=false;
   if(!ok)return;
-  var data={title:title,brand:curBrand,ctype:ct,platforms:plats,publishDate:pub,caption:$('#fCaption').value,attachments:draft.slice()};
+  var data={title:title,owner:$('#fOwner').value.trim().replace(/\s+/g,' '),brand:curBrand,ctype:ct,platforms:plats,publishDate:pub,caption:$('#fCaption').value,attachments:draft.slice()};
   var wasEdit=!!editing;
   if(editing){
     Object.assign(editing,data);
