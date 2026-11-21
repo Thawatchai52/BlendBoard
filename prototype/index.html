@@ -271,6 +271,23 @@ textarea{resize:vertical}
 .cloudask{border-style:solid;border-color:var(--s-revision);background:var(--s-revision-bg);color:var(--fg)}
 .cloudask .btn{border:1px solid var(--line);text-decoration:none;padding:6px 13px;color:var(--fg)}
 .cloudask .btn.primary{color:var(--on-accent);border-color:var(--accent)}
+.bell{position:relative;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:99px;width:40px;height:40px;font-size:18px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.belln{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;border-radius:99px;background:var(--s-revision);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 5px;box-sizing:border-box}
+.notibanner{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:10px 0;padding:10px 14px;border-radius:var(--r);border:1px solid var(--s-revision);background:var(--s-revision-bg);color:var(--fg);font-size:14px;font-weight:600}
+.notibanner[hidden]{display:none}
+.nb-a{display:flex;gap:8px;flex-wrap:wrap}
+.noti{position:fixed;z-index:60;top:calc(env(safe-area-inset-top,0px) + 64px);right:max(16px,env(safe-area-inset-right,0px));width:min(400px,calc(100vw - 32px));max-height:calc(100vh - 110px);display:flex;flex-direction:column;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:var(--r);box-shadow:0 12px 32px rgba(0,0,0,.25)}
+.noti[hidden]{display:none}
+.noti-h{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line)}
+.noti-x{border:0;background:none;color:var(--muted);font-size:16px;cursor:pointer;padding:4px 8px}
+.noti-b{overflow:auto;padding:8px 10px;flex:1}
+.noti-f{padding:10px 14px;border-top:1px solid var(--line);text-align:right}
+.noti-g{font-size:12px;font-weight:700;color:var(--muted);margin:8px 4px 4px;letter-spacing:.02em}
+.noti-i{display:block;width:100%;text-align:left;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:14px;padding:8px 10px;margin-bottom:6px;cursor:pointer;font:inherit}
+.noti-i.new{border-color:var(--s-revision);background:var(--s-revision-bg)}
+.noti-i b{display:block;font-size:14px;overflow-wrap:anywhere}
+.noti-m{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--muted);margin-top:3px}
+.noti-e{text-align:center;color:var(--muted);padding:22px 8px}
 .rolebadge{display:inline-block;font-size:12px;font-weight:600;border-radius:99px;padding:2px 10px;background:var(--surface-2);color:var(--muted);margin-right:4px}
 .rolebadge.mgr{background:color-mix(in srgb,var(--accent) 18%,var(--surface));color:var(--accent)}
 .rolebadge.cur{outline:2px solid var(--accent);outline-offset:1px}
@@ -562,7 +579,17 @@ input[type=text],input[type=url],input[type=number],input[type=datetime-local],s
       <button type="button" id="navTR" aria-pressed="false" hidden>Trend Radar</button>
     </div>
     <span class="cloudpill" id="cloudPill" hidden role="status" aria-live="polite"></span>
+    <button type="button" class="bell" id="bellBtn" aria-label="การแจ้งเตือน" aria-expanded="false" aria-controls="notiPanel"><span aria-hidden="true">🔔</span><span class="belln" id="bellN" hidden>0</span></button>
     <button type="button" class="btn" id="logoutBtn">ออกจากระบบ</button>
+  </div>
+  <div class="notibanner" id="notiBanner" hidden role="alert">
+    <span class="nb-t" id="nbText"></span>
+    <span class="nb-a"><button type="button" class="btn primary" id="nbOpen">ดูรายการ</button><button type="button" class="btn" id="nbAck">รับทราบ</button></span>
+  </div>
+  <div class="noti" id="notiPanel" hidden role="dialog" aria-label="การแจ้งเตือนงานที่ยังไม่ได้ทำ">
+    <div class="noti-h"><strong>งานที่ยังไม่ได้ทำ ใกล้ถึงกำหนด</strong><button type="button" class="noti-x" id="notiClose" aria-label="ปิด">✕</button></div>
+    <div class="noti-b" id="notiBody"></div>
+    <div class="noti-f"><button type="button" class="btn" id="notiAckAll">รับทราบทั้งหมด</button></div>
   </div>
 
   <header class="hero" id="hero">
@@ -991,6 +1018,7 @@ function save(){
     localStorage.setItem(KEY,JSON.stringify({tasks:slim}));
   }catch(e){toast('เก็บข้อมูลในเบราว์เซอร์ไม่ได้ (พื้นที่เต็มหรือถูกปิดไว้)')}
   if(typeof ttSync==='function')ttSync();
+  if(typeof notiUpdate==='function')notiUpdate();
   Cloud.changed();
 }
 
@@ -1569,6 +1597,64 @@ $('#importBtn').onclick=function(){
   save();render();
   toast(n?('นำเข้า '+n+' งานแล้ว (ข้าม '+(IMPORT_NOV26.length-n)+' ที่มีอยู่แล้ว)'):'งานทั้งหมดอยู่ในระบบแล้ว ไม่มีอะไรเพิ่ม');
 };
+/* ---------- แจ้งเตือนบนหน้าจอ: งานที่ยังไม่ลง TikTok เหลืออีก 2 วัน / 1 วัน (ทุกอุปกรณ์ ทั้งสองบทบาท) ---------- */
+var NKEY='content-calendar-noti-v1',nSeen={},NTITLE=document.title;
+try{nSeen=JSON.parse(localStorage.getItem(NKEY)||'{}')||{}}catch(e){nSeen={}}
+function nSave(){try{localStorage.setItem(NKEY,JSON.stringify(nSeen))}catch(e){}}
+function dayDiff(iso){var p=String(iso).slice(0,10).split('-'),d=new Date(+p[0],+p[1]-1,+p[2]),t=new Date();t=new Date(t.getFullYear(),t.getMonth(),t.getDate());return Math.round((d-t)/86400000)}
+function notiList(){
+  return tasks.filter(function(t){return t.status!=='POSTED'&&t.publishDate}).map(function(t){return {t:t,d:dayDiff(t.publishDate)}})
+    .filter(function(x){return x.d===1||x.d===2}).sort(function(a,b){return a.d-b.d||String(a.t.publishDate).localeCompare(String(b.t.publishDate))});
+}
+function nKey(x){return x.t.id+'|'+x.d}
+function notiUpdate(){
+  var list=notiList(),fresh=list.filter(function(x){return !nSeen[nKey(x)]});
+  var bn=$('#bellN');bn.hidden=!fresh.length;bn.textContent=fresh.length>99?'99+':fresh.length;
+  $('#bellBtn').setAttribute('aria-label','การแจ้งเตือน'+(fresh.length?' ใหม่ '+fresh.length+' รายการ':''));
+  document.title=(fresh.length?'('+fresh.length+') ':'')+NTITLE;
+  var ban=$('#notiBanner');
+  if(fresh.length){
+    var d1=fresh.filter(function(x){return x.d===1}).length,d2=fresh.length-d1,parts=[];
+    if(d1)parts.push('พรุ่งนี้ '+d1+' งาน');if(d2)parts.push('อีก 2 วัน '+d2+' งาน');
+    $('#nbText').textContent='🔔 ยังไม่ได้ทำคอนเทนต์: '+parts.join(' · ');ban.hidden=false;
+  }else ban.hidden=true;
+  if(!$('#notiPanel').hidden)notiRender(list);
+}
+function notiRender(list){
+  list=list||notiList();
+  var h='';
+  [[1,'พรุ่งนี้ (ก่อนกำหนด 1 วัน)'],[2,'อีก 2 วัน']].forEach(function(g){
+    var it=list.filter(function(x){return x.d===g[0]});if(!it.length)return;
+    h+='<div class="noti-g">'+g[1]+' · '+it.length+' งาน</div>'+it.map(function(x){
+      var t=x.t,dt=String(t.publishDate),hh=dt.slice(11,16);
+      return '<button type="button" class="noti-i'+(nSeen[nKey(x)]?'':' new')+'" data-nid="'+esc(t.id)+'"><b>'+esc(t.title)+'</b><div class="noti-m">'+
+        '<span>'+esc(BRANDS[t.brand]?BRANDS[t.brand].name:t.brand)+'</span>'+ctHTML(t.ctype)+(t.owner?'<span>👤 '+esc(t.owner)+'</span>':'')+
+        '<span>'+(+dt.slice(8,10))+' '+MSHORT[+dt.slice(5,7)-1]+(hh?' · '+hh+' น.':'')+'</span><span>ยังไม่ลง TikTok</span></div></button>';
+    }).join('');
+  });
+  $('#notiBody').innerHTML=h||'<div class="noti-e">ไม่มีงานค้างที่ใกล้ถึงกำหนด 🎉</div>';
+}
+function notiOpen(open){
+  var pn=$('#notiPanel');pn.hidden=!open;$('#bellBtn').setAttribute('aria-expanded',open);
+  if(open)notiRender();
+}
+function notiAck(){notiList().forEach(function(x){nSeen[nKey(x)]=1});
+  var keep={};notiList().forEach(function(x){keep[nKey(x)]=1});
+  Object.keys(nSeen).forEach(function(k){if(!keep[k]&&Object.keys(nSeen).length>400)delete nSeen[k]});
+  nSave();notiUpdate()}
+$('#bellBtn').onclick=function(e){e.stopPropagation();notiOpen($('#notiPanel').hidden)};
+$('#notiClose').onclick=function(){notiOpen(false)};
+$('#nbOpen').onclick=function(e){e.stopPropagation();notiOpen(true)};
+$('#nbAck').onclick=notiAck;$('#notiAckAll').onclick=notiAck;
+$('#notiBody').addEventListener('click',function(e){
+  var b=e.target.closest('[data-nid]');if(!b)return;
+  notiOpen(false);if(section!=='cal')setSection('cal');openModal(b.dataset.nid);
+});
+document.addEventListener('click',function(e){if(!$('#notiPanel').hidden&&!e.target.closest('#notiPanel')&&!e.target.closest('#bellBtn')&&!e.target.closest('#nbOpen'))notiOpen(false)});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!$('#notiPanel').hidden)notiOpen(false)});
+setInterval(notiUpdate,60000);
+document.addEventListener('visibilitychange',function(){if(!document.hidden)notiUpdate()});
+
 /* ---------- ปรับ UI ตามสิทธิ์ของประตูที่เลือก ---------- */
 function applyRole(){
   var mgr=isMgr();
@@ -1580,7 +1666,7 @@ function applyRole(){
     ?'สิทธิ์ Admin: สร้าง แก้ไข ลบ ลากสลับวัน และดูสถิติ TikTok ได้'
     :'สิทธิ์ Viewer: อ่านอย่างเดียว ลากเลื่อนไม่ได้ แต่เปิดดูบรีฟ ดาวน์โหลดไฟล์ และวางลิงก์ TikTok เมื่อคอนเทนต์ลงแล้วได้';
   $('#newBtn').hidden=!mgr;$('#importBtn').hidden=!mgr;
-  $('#clearDemo').hidden=!mgr;$('#resetDemo').hidden=!mgr;$('#demoBar').hidden=!!(CLOUD.url&&CLOUD.key);Cloud.resolve();
+  $('#clearDemo').hidden=!mgr;$('#resetDemo').hidden=!mgr;$('#demoBar').hidden=!!(CLOUD.url&&CLOUD.key);Cloud.resolve();notiUpdate();
   $('#demoText').textContent=mgr
     ?'ข้อมูลที่เห็นเป็นตัวอย่าง ลากการ์ดเพื่อเลื่อนวัน ข้อมูลเก็บในเบราว์เซอร์เครื่องนี้'
     :'ข้อมูลที่เห็นเป็นตัวอย่าง ตอนนี้เป็นโหมดอ่านอย่างเดียว เปิดงานเพื่ออ่านบรีฟ และวางลิงก์ TikTok เมื่อลงแล้วได้';
