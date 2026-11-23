@@ -1,5 +1,16 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#FF8A1F">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<style>html{color-scheme:light}body{margin:0}img{max-width:100%}</style>
 <title>Content Calendar</title>
-<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mali:wght@500;600;700&family=Noto+Sans+Thai+Looped:wght@400;500;600&display=swap">
 <style>
 /* Layout: แถบ Hero ของ "โลก" แบรนด์ (สวิตช์ + ภารกิจประจำเดือน) → แถบเครื่องมือ → สรุปสถานะ → ตัวกรอง + ปฏิทิน/Kanban
@@ -286,6 +297,8 @@ textarea{resize:vertical}
 .noti-x{border:0;background:none;color:var(--muted);font-size:16px;cursor:pointer;padding:4px 8px}
 .noti-b{overflow:auto;padding:8px 10px;flex:1}
 .noti-f{padding:10px 14px;border-top:1px solid var(--line);text-align:right}
+.noti-push{padding:10px 14px;border-top:1px solid var(--line)}
+.noti-push p{margin:6px 0 0;font-size:12px;color:var(--muted)}
 .noti-g{font-size:12px;font-weight:700;color:var(--muted);margin:8px 4px 4px;letter-spacing:.02em}
 .noti-i{display:block;width:100%;text-align:left;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:14px;padding:8px 10px;margin-bottom:6px;cursor:pointer;font:inherit}
 .noti-i.new{border-color:var(--s-revision);background:var(--s-revision-bg)}
@@ -593,6 +606,7 @@ input[type=text],input[type=url],input[type=number],input[type=datetime-local],s
   <div class="noti" id="notiPanel" hidden role="dialog" aria-label="การแจ้งเตือนงานที่ยังไม่ได้ทำ">
     <div class="noti-h"><strong>งานที่ยังไม่ได้ทำ ใกล้ถึงกำหนด</strong><button type="button" class="noti-x" id="notiClose" aria-label="ปิด">✕</button></div>
     <div class="noti-b" id="notiBody"></div>
+    <div class="noti-push"><button type="button" class="btn" id="pushBtn"></button><p id="pushNote"></p></div>
     <div class="noti-f"><button type="button" class="btn" id="notiAckAll">รับทราบทั้งหมด</button></div>
   </div>
 
@@ -979,7 +993,8 @@ var Cloud=(function(){
     if(a)a.onclick=upload;if(b)b.onclick=discard;
     paint();cycle();setInterval(cycle,CLOUD.poll);
   }
-  return {on:on,start:start,changed:changed,resolve:resolveHolds};
+  function put(kind,id,data,del){return api('items?on_conflict=kind,id',{method:'POST',headers:H({Prefer:'resolution=merge-duplicates,return=minimal'}),body:JSON.stringify([{kind:kind,id:id,data:data||{},deleted:!!del}])})}
+  return {on:on,start:start,changed:changed,resolve:resolveHolds,put:put};
 })();
 
 var now=new Date();
@@ -1655,7 +1670,7 @@ function notiRender(list){
 }
 function notiOpen(open){
   var pn=$('#notiPanel');pn.hidden=!open;$('#bellBtn').setAttribute('aria-expanded',open);
-  if(open)notiRender();
+  if(open){notiRender();pushPaint()}
 }
 function notiAck(){notiList().forEach(function(x){nSeen[nKey(x)]=1});
   var keep={};notiList().forEach(function(x){keep[nKey(x)]=1});
@@ -1674,6 +1689,62 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!$('#notiPa
 setInterval(notiUpdate,60000);
 document.addEventListener('visibilitychange',function(){if(!document.hidden)notiUpdate()});
 
+/* ---------- แจ้งเตือนของระบบ (Web Push): ขึ้นหน้าจอล็อก / มุมจอคอม แม้ปิดเว็บอยู่ ---------- */
+var VAPID_PUB='BIDG90Sh68nULeyLElmbljmERnOoA_JhqiBg0vz7-y_fr9QVTUTTCSS--A7ayL_P5trAasoXli7YkqDwQJexPKI';
+function pushSecure(){return location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1'}
+function pushSupported(){return pushSecure()&&'serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window}
+function isIOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)}
+function isStandalone(){return (window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone===true}
+function u8(b){var p='='.repeat((4-b.length%4)%4),r=atob((b+p).replace(/-/g,'+').replace(/_/g,'/')),o=new Uint8Array(r.length);for(var i=0;i<r.length;i++)o[i]=r.charCodeAt(i);return o}
+function sha256hex(t){return crypto.subtle.digest('SHA-256',new TextEncoder().encode(t)).then(function(b){return Array.prototype.map.call(new Uint8Array(b),function(x){return ('0'+x.toString(16)).slice(-2)}).join('')})}
+function pushState(){
+  if(!pushSupported()){
+    if(isIOS()&&!isStandalone())return Promise.resolve({k:'ios'});
+    return Promise.resolve({k:'unsupported'});
+  }
+  if(!Cloud.on)return Promise.resolve({k:'nocloud'});
+  if(Notification.permission==='denied')return Promise.resolve({k:'denied'});
+  return navigator.serviceWorker.getRegistration('sw.js').then(function(r){return r?r.pushManager.getSubscription():null}).then(function(sub){return {k:sub&&Notification.permission==='granted'?'on':'off'}}).catch(function(){return {k:'off'}});
+}
+function pushPaint(){
+  pushState().then(function(st){
+    var b=$('#pushBtn'),n=$('#pushNote'),k=st.k;
+    b.hidden=!(k==='off'||k==='on');b.className='btn'+(k==='off'?' primary':'');
+    b.textContent=k==='on'?'ปิดแจ้งเตือนบนเครื่องนี้':'🔔 เปิดแจ้งเตือนบนเครื่องนี้';
+    n.textContent={
+      off:'ขึ้นที่หน้าจอล็อก/มุมจอ ตอน 09:00 ของวัน เมื่อมีงานที่ยังไม่ทำเหลืออีก 2 วัน และ 1 วัน แม้ปิดเว็บอยู่',
+      on:'เปิดอยู่ ✓ เครื่องนี้จะได้รับแจ้งเตือนทุกเช้า 09:00 เมื่อมีงานใกล้ถึงกำหนด',
+      denied:'การแจ้งเตือนถูกบล็อกอยู่ ไปที่ตั้งค่าเว็บไซต์ของเบราว์เซอร์ แล้วเปลี่ยนเป็น "อนุญาต" จากนั้นกลับมากดใหม่',
+      ios:'บน iPhone/iPad: กดปุ่มแชร์ > "เพิ่มไปยังหน้าจอโฮม" แล้วเปิดเว็บจากไอคอนบนหน้าจอโฮม จากนั้นกดเปิดแจ้งเตือนที่นี่',
+      nocloud:'ต้องเปิดโหมดออนไลน์ก่อนจึงจะส่งแจ้งเตือนข้ามเครื่องได้',
+      unsupported:'เบราว์เซอร์/ที่อยู่นี้ไม่รองรับแจ้งเตือนของระบบ (ใช้ได้ที่ลิงก์ https ใน Chrome, Edge, Firefox, Safari ใหม่)'
+    }[k]||'';
+  });
+}
+function pushEnable(){
+  navigator.serviceWorker.register('sw.js').then(function(){return navigator.serviceWorker.ready}).then(function(reg){
+    return Notification.requestPermission().then(function(perm){
+      if(perm!=='granted'){pushPaint();return}
+      return reg.pushManager.getSubscription().then(function(sub){return sub||reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:u8(VAPID_PUB)})}).then(function(sub){
+        var j=sub.toJSON();
+        return sha256hex(j.endpoint).then(function(id){return Cloud.put('push',id,{endpoint:j.endpoint,keys:j.keys,role:role,at:Date.now()})});
+      }).then(function(){
+        toast('เปิดแจ้งเตือนแล้ว ✓');
+        return reg.showNotification('เปิดแจ้งเตือนสำเร็จ ✓',{body:'จะเตือนงานที่ยังไม่ทำ ก่อนถึงกำหนด 2 วัน และ 1 วัน',icon:'icon-192.png',tag:'cc-welcome'});
+      });
+    });
+  }).catch(function(e){toast('เปิดแจ้งเตือนไม่ได้: '+((e&&e.message)||e))}).then(pushPaint);
+}
+function pushDisable(){
+  navigator.serviceWorker.getRegistration('sw.js').then(function(reg){
+    if(!reg)return;
+    return reg.pushManager.getSubscription().then(function(sub){
+      if(!sub)return;
+      return sha256hex(sub.endpoint).then(function(id){return Cloud.put('push',id,{},true)}).catch(function(){}).then(function(){return sub.unsubscribe()});
+    });
+  }).then(function(){toast('ปิดแจ้งเตือนบนเครื่องนี้แล้ว')}).catch(function(e){toast('ปิดไม่ได้: '+((e&&e.message)||e))}).then(pushPaint);
+}
+$('#pushBtn').onclick=function(){pushState().then(function(st){if(st.k==='on')pushDisable();else if(st.k==='off')pushEnable()})};
 /* ---------- ปรับ UI ตามสิทธิ์ของประตูที่เลือก ---------- */
 function applyRole(){
   var mgr=isMgr();
@@ -2136,3 +2207,6 @@ initLanding();
 Cloud.start();
 })();
 </script>
+
+</body>
+</html>
