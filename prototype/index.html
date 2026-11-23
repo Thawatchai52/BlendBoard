@@ -23,7 +23,7 @@
   --f-head:'Mali','Noto Sans Thai Looped',system-ui,sans-serif;
   --f-body:'Noto Sans Thai Looped',system-ui,-apple-system,'Segoe UI',sans-serif;
   --shadow:0 3px 10px light-dark(rgba(255,130,40,.2),rgba(0,0,0,.35));
-  --s-draft:light-dark(#6B6475,#C9C0D6);   --s-draft-bg:light-dark(#F1EBF7,#3A3045);
+  --s-draft:light-dark(#C0264A,#FF9AB0);   --s-draft-bg:light-dark(#FFE1E8,#47202B);
   --s-review:light-dark(#8F5B00,#F2C14E);  --s-review-bg:light-dark(#FFF0C2,#3F3214);
   --s-revision:light-dark(#C0264A,#FF9AB0);--s-revision-bg:light-dark(#FFE1E8,#47202B);
   --s-approved:light-dark(#1F8040,#7EDB9A);--s-approved-bg:light-dark(#DDF6E4,#17341F);
@@ -191,7 +191,11 @@ body.switching .hero-switch{position:relative;z-index:70}
 .add:hover{background:var(--surface-2)}
 .chip{display:flex;align-items:center;gap:5px;min-width:0;border:1px solid var(--line);border-left:4px solid var(--brand);background:var(--surface);border-radius:calc(var(--r) - 6px);padding:3px 6px;font-size:12px;text-align:left;cursor:grab;box-shadow:var(--shadow)}
 .chip:hover{border-color:var(--brand)}
-.chip .sd{flex:none;width:8px;height:8px;border-radius:50%;background:var(--sc)}
+.chip{background:var(--sb,var(--surface))}
+.tick{flex:none;width:20px;height:20px;border-radius:50%;border:2px solid var(--s-draft);background:var(--surface);color:#fff;font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;line-height:1;box-sizing:border-box}
+.tick.on{background:var(--s-approved);border-color:var(--s-approved)}
+.tick.posted{background:var(--s-posted);border-color:var(--s-posted);cursor:default}
+@media (pointer:coarse){.tick{width:26px;height:26px;font-size:15px}}
 .chip .t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .chip.late{background:var(--s-revision-bg)}
 .dragging{opacity:.4}
@@ -749,7 +753,8 @@ input[type=text],input[type=url],input[type=number],input[type=datetime-local],s
           <input type="text" id="fOwner" placeholder="เช่น พี่มิ้นท์" maxlength="60" autocomplete="off"></label>
         <div class="row2">
           <label class="fld"><span>แบรนด์ (ล็อกตามโลกที่เลือก)</span><select id="fBrand" disabled></select></label>
-          <label class="fld"><span>สถานะ (ดูจากลิงก์ TikTok)</span><output id="fState" class="statebox"></output></label>
+          <div class="fld"><span>สถานะ</span><output id="fState" class="statebox"></output>
+            <button type="button" class="btn" id="doneBtn" hidden></button></div>
         </div>
         <div class="row2">
           <label class="fld"><span>ประเภทงาน</span><select id="fCtype"></select><span class="err" id="eCtype"></span></label>
@@ -801,7 +806,8 @@ input[type=text],input[type=url],input[type=number],input[type=datetime-local],s
 (function(){
 'use strict';
 var STATUSES=[
-  {id:'DRAFT',label:'ยังไม่ลง TikTok',c:'--s-draft',b:'--s-draft-bg'},
+  {id:'DRAFT',label:'ยังไม่ทำ',c:'--s-draft',b:'--s-draft-bg'},
+  {id:'DONE',label:'ทำแล้ว (รอลง TikTok)',c:'--s-approved',b:'--s-approved-bg'},
   {id:'POSTED',label:'ลง TikTok แล้ว',c:'--s-posted',b:'--s-posted-bg'}];
 var PLATS=[
   {id:'FB',label:'Facebook'},{id:'IG',label:'Instagram'},{id:'TT',label:'TikTok'}];
@@ -845,12 +851,25 @@ function isMgr(){return role==='ADMIN'}
 function can(action){
   if(isMgr())return true;
   if(role!=='VIEWER')return false;
-  return action==='view'||action==='download'||action==='link';   // ฝั่งดูตารางส่งได้แค่ลิงก์ TikTok
+  return action==='view'||action==='download'||action==='link'||action==='done';   // ฝั่งดูตารางส่งได้แค่ลิงก์ TikTok
 }
 /* สถานะไม่มีการตรวจ/อนุมัติแล้ว: งานที่มีลิงก์ TikTok = "ลง TikTok แล้ว" ที่เหลือ = "ยังไม่ลง" */
 function isTTLink(a){return a.kind==='LINK'&&a.purpose==='DELIVERABLE'&&parseTT(a.url).ok}
 function hasTT(t){return (t.attachments||[]).some(isTTLink)}
-function normStatus(){tasks.forEach(function(t){t.status=hasTT(t)?'POSTED':'DRAFT'})}
+function normStatus(){tasks.forEach(function(t){t.status=hasTT(t)?'POSTED':(t.done?'DONE':'DRAFT')})}
+/* กดติ๊ก "ทำแล้ว" ได้ทั้งสองฝั่ง ไม่ต้องใส่ลิงก์ TikTok · ลง TikTok แล้วค่อยใส่ลิงก์ → เปลี่ยนเป็น "ลง TikTok แล้ว" */
+function toggleDone(id){
+  if(!can('done'))return;
+  var t=tasks.filter(function(x){return x.id===id})[0];if(!t)return;
+  if(hasTT(t)){toast('งานนี้ลง TikTok แล้ว ถือว่าทำแล้ว');return}
+  t.done=!t.done;save();render();
+  toast(t.done?'ทำแล้ว ✓ · ลง TikTok เมื่อไรค่อยเอาลิงก์มาใส่':'ยกเลิก "ทำแล้ว" แล้ว');
+  if(typeof paintState==='function'&&editing&&editing.id===id)paintState();
+}
+function tickHTML(t){
+  var on=t.status!=='DRAFT';
+  return '<span class="tick'+(t.status==='POSTED'?' posted':on?' on':'')+'" role="checkbox" aria-checked="'+on+'" aria-label="'+(on?'ทำแล้ว':'ยังไม่ทำ')+': '+esc(t.title)+'" data-done="'+esc(t.id)+'">'+(on?'✓':'')+'</span>';
+}
 function demoArt(b){
   var c=b==='KS'?'#E8590C':'#6B4630';
   var svg='<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400"><rect width="600" height="400" fill="'+c+'"/><circle cx="300" cy="170" r="70" fill="rgba(255,255,255,.25)"/><text x="300" y="320" font-size="30" text-anchor="middle" fill="#fff" font-family="sans-serif">Artwork v1</text></svg>';
@@ -1077,17 +1096,17 @@ function updateQuest(){}
 /* ---------- render views ---------- */
 function chipHTML(t){
   var s=stat(t.status);
-  return '<button type="button" class="chip" draggable="'+(isMgr()?'true':'false')+'" data-id="'+t.id+'" style="--sc:var('+s.c+')" title="'+esc(t.title)+(ctype(t.ctype)?' · '+ctype(t.ctype).label:'')+(t.owner?' · 👤 '+esc(t.owner):'')+' · '+s.label+'">'+
-    '<span class="sd"></span>'+ctHTML(t.ctype)+'<span class="t">'+esc(t.title)+'</span>'+'</button>';
+  return '<button type="button" class="chip" draggable="'+(isMgr()?'true':'false')+'" data-id="'+t.id+'" style="--sc:var('+s.c+');--sb:var('+s.b+')" title=""'+esc(t.title)+(ctype(t.ctype)?' · '+ctype(t.ctype).label:'')+(t.owner?' · 👤 '+esc(t.owner):'')+' · '+s.label+'">'+
+    tickHTML(t)+ctHTML(t.ctype)+'<span class="t">'+esc(t.title)+'</span>'+'</button>';
 }
 function cardHTML(t){
   var img=(t.attachments||[]).filter(function(a){return a.kind==='IMAGE'})[0];
   return '<div class="card" tabindex="0" role="button" draggable="'+(isMgr()?'true':'false')+'" data-id="'+t.id+'">'+
     (img?'<img src="'+esc(img.url)+'" alt="">':'')+
-    '<div class="cb"><div class="meta"><b>'+t.brand+'</b><span class="num">'+fmtDay(t.publishDate)+' '+t.publishDate.slice(11,16)+'</span></div>'+
+    '<div class="cb"><div class="meta">'+tickHTML(t)+'<b>'+t.brand+'</b><span class="num">'+fmtDay(t.publishDate)+' '+t.publishDate.slice(11,16)+'</span></div>'+
     '<div class="title">'+esc(t.title)+'</div>'+(t.owner?'<div class="own">👤 '+esc(t.owner)+'</div>':'')+
     '<div class="tags">'+ctHTML(t.ctype)+t.platforms.map(function(p){return '<span class="tag-s">'+p+'</span>'}).join('')+
-    (t.status==='POSTED'?'<span class="due ok">ลง TikTok แล้ว</span>':'')+
+    (t.status==='POSTED'?'<span class="due ok">ลง TikTok แล้ว</span>':t.status==='DONE'?'<span class="due ok">ทำแล้ว</span>':'')+
     ((t.attachments||[]).length?'<span class="clip num">ไฟล์ '+t.attachments.length+'</span>':'')+
     '</div></div></div>';
 }
@@ -1603,7 +1622,7 @@ try{nSeen=JSON.parse(localStorage.getItem(NKEY)||'{}')||{}}catch(e){nSeen={}}
 function nSave(){try{localStorage.setItem(NKEY,JSON.stringify(nSeen))}catch(e){}}
 function dayDiff(iso){var p=String(iso).slice(0,10).split('-'),d=new Date(+p[0],+p[1]-1,+p[2]),t=new Date();t=new Date(t.getFullYear(),t.getMonth(),t.getDate());return Math.round((d-t)/86400000)}
 function notiList(){
-  return tasks.filter(function(t){return t.status!=='POSTED'&&t.publishDate}).map(function(t){return {t:t,d:dayDiff(t.publishDate)}})
+  return tasks.filter(function(t){return t.status==='DRAFT'&&t.publishDate}).map(function(t){return {t:t,d:dayDiff(t.publishDate)}})
     .filter(function(x){return x.d===1||x.d===2}).sort(function(a,b){return a.d-b.d||String(a.t.publishDate).localeCompare(String(b.t.publishDate))});
 }
 function nKey(x){return x.t.id+'|'+x.d}
@@ -1629,7 +1648,7 @@ function notiRender(list){
       var t=x.t,dt=String(t.publishDate),hh=dt.slice(11,16);
       return '<button type="button" class="noti-i'+(nSeen[nKey(x)]?'':' new')+'" data-nid="'+esc(t.id)+'"><b>'+esc(t.title)+'</b><div class="noti-m">'+
         '<span>'+esc(BRANDS[t.brand]?BRANDS[t.brand].name:t.brand)+'</span>'+ctHTML(t.ctype)+(t.owner?'<span>👤 '+esc(t.owner)+'</span>':'')+
-        '<span>'+(+dt.slice(8,10))+' '+MSHORT[+dt.slice(5,7)-1]+(hh?' · '+hh+' น.':'')+'</span><span>ยังไม่ลง TikTok</span></div></button>';
+        '<span>'+(+dt.slice(8,10))+' '+MSHORT[+dt.slice(5,7)-1]+(hh?' · '+hh+' น.':'')+'</span><span>ยังไม่ทำ</span></div></button>';
     }).join('');
   });
   $('#notiBody').innerHTML=h||'<div class="noti-e">ไม่มีงานค้างที่ใกล้ถึงกำหนด 🎉</div>';
@@ -1664,12 +1683,12 @@ function applyRole(){
   rb.className='rolebadge'+(mgr?' mgr':'');
   $('#uPerm').textContent=mgr
     ?'สิทธิ์ Admin: สร้าง แก้ไข ลบ ลากสลับวัน และดูสถิติ TikTok ได้'
-    :'สิทธิ์ Viewer: อ่านอย่างเดียว ลากเลื่อนไม่ได้ แต่เปิดดูบรีฟ ดาวน์โหลดไฟล์ และวางลิงก์ TikTok เมื่อคอนเทนต์ลงแล้วได้';
+    :'สิทธิ์ Viewer: อ่านอย่างเดียว ลากเลื่อนไม่ได้ แต่เปิดดูบรีฟ ดาวน์โหลดไฟล์ กดติ๊ก ✓ ว่าทำแล้ว และวางลิงก์ TikTok เมื่อลงแล้วได้';
   $('#newBtn').hidden=!mgr;$('#importBtn').hidden=!mgr;
   $('#clearDemo').hidden=!mgr;$('#resetDemo').hidden=!mgr;$('#demoBar').hidden=!!(CLOUD.url&&CLOUD.key);Cloud.resolve();notiUpdate();
   $('#demoText').textContent=mgr
     ?'ข้อมูลที่เห็นเป็นตัวอย่าง ลากการ์ดเพื่อเลื่อนวัน ข้อมูลเก็บในเบราว์เซอร์เครื่องนี้'
-    :'ข้อมูลที่เห็นเป็นตัวอย่าง ตอนนี้เป็นโหมดอ่านอย่างเดียว เปิดงานเพื่ออ่านบรีฟ และวางลิงก์ TikTok เมื่อลงแล้วได้';
+    :'ข้อมูลที่เห็นเป็นตัวอย่าง ตอนนี้เป็นโหมดอ่านอย่างเดียว เปิดงานเพื่ออ่านบรีฟ กดติ๊ก ✓ ว่าทำแล้ว และวางลิงก์ TikTok เมื่อลงแล้วได้';
   $('#navTR').hidden=!mgr;$('#navTT').hidden=!mgr;
   if(section==='tt'&&!mgr)setSection('cal');
   if(section==='tr'&&!mgr)setSection('cal');
@@ -1835,6 +1854,8 @@ $('#summary').addEventListener('click',function(e){
 $('#view').addEventListener('click',function(e){
   var add=e.target.closest('[data-add]');
   if(add){openModal(null,add.dataset.add);return}
+  var dn=e.target.closest('[data-done]');
+  if(dn){e.preventDefault();e.stopPropagation();toggleDone(dn.dataset.done);return}
   var el=e.target.closest('[data-id]');
   if(el)openModal(el.dataset.id);
 });
@@ -1865,7 +1886,7 @@ function openModal(id,date){
   $('#fTitle').value=t?t.title:'';
   $('#fOwner').value=t?(t.owner||''):'';
   $('#fBrand').value=curBrand;
-  $('#fState').textContent=t&&t.status==='POSTED'?'ลง TikTok แล้ว ✓':'ยังไม่ลง TikTok';
+  paintState();
   $$('#fPlats input').forEach(function(i){i.checked=!!t&&t.platforms.indexOf(i.value)>-1});
   $('#fCtype').value=t&&t.ctype?t.ctype:'';syncCt();
   $('#fPub').value=t?t.publishDate:base;
@@ -1918,8 +1939,16 @@ function persistLive(){
   var keepOther=(editing.attachments||[]).filter(function(a){return !isTTLink(a)});
   editing.attachments=keepOther.concat(draft.filter(isTTLink));
   save();render();
-  $('#fState').textContent=editing.status==='POSTED'?'ลง TikTok แล้ว ✓':'ยังไม่ลง TikTok';
+  paintState();
 }
+function paintState(){
+  var t=editing,o=$('#fState'),b=$('#doneBtn');
+  if(!t){o.textContent='ยังไม่ทำ';b.hidden=true;return}
+  o.textContent=t.status==='POSTED'?'ลง TikTok แล้ว ✓':t.status==='DONE'?'ทำแล้ว ✓ (รอลง TikTok)':'ยังไม่ทำ';
+  b.hidden=!can('done');b.disabled=t.status==='POSTED';
+  b.textContent=t.status==='DONE'?'ยกเลิก "ทำแล้ว"':'✓ ทำเครื่องหมายว่าทำแล้ว';
+}
+$('#doneBtn').onclick=function(){if(editing)toggleDone(editing.id)};
 function onRemoveClick(e){
   var b=e.target.closest('[data-rm]');if(!b)return;
   var a=draft[+b.dataset.rm];if(!a||!canRemoveFile(a))return;
